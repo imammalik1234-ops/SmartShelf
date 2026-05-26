@@ -83,9 +83,7 @@ def create_expiry_alert(product):
 
 @app.route('/')
 def home():
-    return {
-        "message": "SmartShelf Backend Running"
-    }
+    return render_template('record-sale.html')
 
 @app.route('/products', methods=['GET'])
 def get_products():
