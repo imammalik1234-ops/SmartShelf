@@ -1,368 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Record Sale - Smart Shelf</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Inter, Arial, sans-serif;
-    }
-
-    body {
-      background: #f8fafc;
-      color: #111827;
-      display: flex;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      width: 260px;
-      background: #ffffff;
-      border-right: 1px solid #e5e7eb;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .brand {
-      padding: 30px 28px;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      gap: 14px;
-      align-items: center;
-    }
-
-    .logo {
-  width: 70px;
-  height: 70px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-}
-
-.logo img {
-  width: 70px;
-  height: auto;
-  object-fit: contain;
-}
-
-    .brand h2 {
-      font-size: 22px;
-      font-weight: 800;
-    }
-
-    .brand p {
-      color: #15803d;
-      font-size: 14px;
-      margin-top: 4px;
-    }
-
-    .nav {
-      padding: 28px 16px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 18px;
-      margin-bottom: 10px;
-      border-radius: 14px;
-      color: #374151;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .nav-item span {
-      font-size: 22px;
-      width: 24px;
-      text-align: center;
-    }
-
-    .nav-item.active {
-      background: #ecfdf3;
-      color: #15803d;
-      font-weight: 700;
-    }
-
-    .logout {
-      padding: 26px 28px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      font-weight: 700;
-      color: #111827;
-    }
-
-    .main {
-      flex: 1;
-      min-height: 100vh;
-    }
-
-    .topbar {
-      height: 78px;
-      background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 0 36px;
-    }
-
-    .search {
-      width: 680px;
-      position: relative;
-    }
-
-    .search input {
-      width: 100%;
-      padding: 15px 18px 15px 48px;
-      border: 1px solid #d9dee7;
-      border-radius: 12px;
-      font-size: 16px;
-      outline: none;
-      background: #fff;
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 17px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #9ca3af;
-      font-size: 22px;
-    }
-
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      text-align: right;
-    }
-
-    .profile h4 {
-      font-size: 15px;
-      font-weight: 800;
-    }
-
-    .profile p {
-      color: #6b7280;
-      font-size: 13px;
-      margin-top: 3px;
-    }
-
-    .avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: #dcfce7;
-      color: #15803d;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 18px;
-    }
-
-    .content {
-      padding: 42px 0 0 38px;
-    }
-
-    .back {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #374151;
-      font-weight: 700;
-      margin-bottom: 30px;
-      font-size: 16px;
-    }
-
-    .back span {
-      font-size: 24px;
-    }
-
-    .content h1 {
-      font-size: 34px;
-      margin-bottom: 12px;
-      font-weight: 800;
-    }
-
-    .subtitle {
-      color: #4b5563;
-      font-size: 17px;
-      margin-bottom: 34px;
-    }
-
-    .form-card {
-      width: 760px;
-      background: #ffffff;
-      border: 1px solid #e0e4ea;
-      border-radius: 14px;
-      padding: 34px;
-    }
-
-    label {
-      display: block;
-      font-weight: 800;
-      color: #374151;
-      margin-bottom: 10px;
-      font-size: 15px;
-    }
-
-    select,
-    input {
-      width: 100%;
-      height: 54px;
-      border: 1px solid #d1d5db;
-      border-radius: 11px;
-      padding: 0 18px;
-      font-size: 16px;
-      outline: none;
-      background: #ffffff;
-      margin-bottom: 24px;
-    }
-
-    .stock-box {
-      height: 48px;
-      border-radius: 10px;
-      border: 1px solid #bbf7d0;
-      background: #f0fdf4;
-      color: #15803d;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 800;
-      padding: 0 18px;
-      margin-bottom: 24px;
-    }
-
-    .stock-box span {
-      font-size: 20px;
-    }
-
-    .record-btn {
-      width: 100%;
-      height: 58px;
-      border: none;
-      border-radius: 10px;
-      background: #2f9e44;
-      color: white;
-      font-size: 18px;
-      font-weight: 800;
-      cursor: pointer;
-      margin-top: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .record-btn:hover {
-      background: #238636;
-    }
-
-    .message {
-      margin-top: 18px;
-      font-weight: 700;
-      display: none;
-    }
-
-    .success {
-      color: #15803d;
-    }
-
-    .error {
-      color: #dc2626;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/smartshelf.css') }}">
 </head>
 
 <body>
-  <aside class="sidebar">
-    <div>
-      <div class="brand">
-       <div class="logo">
-  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
-</div>
-        <div>
-          <h2>Smart Shelf</h2>
-          <p>Staff Portal</p>
-        </div>
-      </div>
-
-      <nav class="nav">
-        <div class="nav-item"><span>▦</span> Dashboard</div>
-        <div class="nav-item"><span>◈</span> Inventory</div>
-        <div class="nav-item"><span>◈</span> Add Product</div>
-        <div class="nav-item active"><span>🛒</span> Record Sales</div>
-        <div class="nav-item"><span>⚠</span> Expiry Alerts</div>
-      </nav>
-    </div>
-
-    <div class="logout">
-      <span style="font-size: 24px;">↪</span>
-      Logout
-    </div>
-  </aside>
-
-  <main class="main">
-    <header class="topbar">
-
-      <div class="profile">
-        <div>
-          <h4>Staff Member</h4>
-          <p>staff@example.com</p>
-        </div>
-        <div class="avatar">SM</div>
-      </div>
-    </header>
-
-    <section class="content">
-      <div class="back">
-        <span>←</span>
-        Back to Inventory
-      </div>
-
-      <h1>Record Sale</h1>
-      <p class="subtitle">Enter sale details to update inventory and track sales</p>
-
-      <div class="form-card">
-        <label for="productSelect">Product *</label>
-        <select id="productSelect">
-          <option value="">Select a product</option>
-        </select>
-
-        <div class="stock-box" id="currentStock">
-          <span>◈</span>
-          Current Stock: --
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
+          </div>
+          <div>
+            <h2>Smart Shelf</h2>
+            <p>Staff Portal</p>
+          </div>
         </div>
 
-        <label for="quantitySold">Quantity Sold *</label>
-        <input type="number" id="quantitySold" placeholder="0" min="1" />
-
-        <label for="saleDate">Sale Date *</label>
-        <input type="date" id="saleDate" />
-
-        <button class="record-btn" onclick="recordSale()">
-          🛒 Record Sale
-        </button>
-
-        <p id="message" class="message"></p>
+        <nav class="nav">
+          <a href="/dashboard"><span class="nav-icon">D</span> Dashboard</a>
+          <a href="/inventory-page"><span class="nav-icon">I</span> Inventory</a>
+          <a href="/add-product"><span class="nav-icon">+</span> Add Product</a>
+          <a class="active" href="/record-sale"><span class="nav-icon">S</span> Record Sale</a>
+          <a href="/expiry-alerts"><span class="nav-icon">!</span> Expiry Alerts</a>
+        </nav>
       </div>
-    </section>
-  </main>
+
+      <a class="logout" href="#">Logout</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <span></span>
+          <input type="search" placeholder="Search inventory...">
+        </div>
+        <div class="profile">
+          <div>
+            <h4>Staff Member</h4>
+            <p>staff@example.com</p>
+          </div>
+          <div class="avatar">SM</div>
+        </div>
+      </header>
+
+      <section class="content">
+        <a class="back-link" href="/inventory-page">&lt; Back to Inventory</a>
+        <h1>Record Sale</h1>
+        <p class="subtitle">Enter sale details to update inventory and track sales</p>
+
+        <div class="panel form-panel">
+          <label for="productSelect">Product *</label>
+          <select id="productSelect">
+            <option value="">Select a product</option>
+          </select>
+
+          <div class="stock-box" id="currentStock">Current Stock: --</div>
+
+          <label for="quantitySold">Quantity Sold *</label>
+          <input type="number" id="quantitySold" placeholder="0" min="1">
+
+          <label for="saleDate">Sale Date *</label>
+          <input type="date" id="saleDate">
+
+          <button class="btn btn-primary" style="width:100%;margin-top:6px;" onclick="recordSale()">Record Sale</button>
+          <p id="message" class="message"></p>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script>
-    const API_URL = "http://127.0.0.1:5000";
+    const API_URL = "";
     let inventoryData = [];
 
     document.getElementById("saleDate").valueAsDate = new Date();
@@ -389,9 +102,9 @@
       const selectedProductId = Number(this.value);
       const item = inventoryData.find(i => i.product_id === selectedProductId);
 
-      document.getElementById("currentStock").innerHTML = item
-        ? `<span>◈</span> Current Stock: ${item.quantity}`
-        : `<span>◈</span> Current Stock: --`;
+      document.getElementById("currentStock").textContent = item
+        ? `Current Stock: ${item.quantity}`
+        : "Current Stock: --";
     });
 
     async function recordSale() {
@@ -424,13 +137,12 @@
       if (response.ok) {
         message.textContent = `Sale recorded successfully. Remaining stock: ${result.remaining_stock}`;
         message.classList.add("success");
-
         document.getElementById("quantitySold").value = "";
         await loadProductsAndInventory();
 
         const item = inventoryData.find(i => i.product_id === productId);
-        document.getElementById("currentStock").innerHTML =
-          `<span>◈</span> Current Stock: ${item ? item.quantity : "--"}`;
+        document.getElementById("currentStock").textContent =
+          `Current Stock: ${item ? item.quantity : "--"}`;
       } else {
         message.textContent = result.error || "Something went wrong.";
         message.classList.add("error");

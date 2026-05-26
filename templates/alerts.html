@@ -1,407 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expiry Alerts - Smart Shelf</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Inter, Arial, sans-serif;
-    }
-
-    body {
-      background: #f8fafc;
-      display: flex;
-      min-height: 100vh;
-      color: #111827;
-    }
-
-    .sidebar {
-      width: 260px;
-      background: #fff;
-      border-right: 1px solid #e5e7eb;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 30px 28px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .logo {
-  width: 70px;
-  height: 70px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-}
-
-.logo img {
-  width: 70px;
-  height: auto;
-  object-fit: contain;
-}
-
-    .brand h2 {
-      font-size: 22px;
-      font-weight: 800;
-    }
-
-    .brand p {
-      color: #15803d;
-      font-size: 14px;
-      margin-top: 4px;
-    }
-
-    .nav {
-      padding: 28px 16px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 18px;
-      margin-bottom: 10px;
-      border-radius: 14px;
-      color: #374151;
-      font-size: 16px;
-    }
-
-    .nav-item span {
-      width: 24px;
-      text-align: center;
-      font-size: 22px;
-    }
-
-    .nav-item.active {
-      background: #ecfdf3;
-      color: #15803d;
-      font-weight: 700;
-    }
-
-    .logout {
-      padding: 26px 28px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      font-weight: 700;
-    }
-
-    .main {
-      flex: 1;
-    }
-
-    .topbar {
-      height: 78px;
-      background: #fff;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      padding: 0 36px;
-    }
-
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      text-align: right;
-    }
-
-    .profile h4 {
-      font-size: 15px;
-      font-weight: 800;
-    }
-
-    .profile p {
-      color: #6b7280;
-      font-size: 13px;
-      margin-top: 3px;
-    }
-
-    .avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: #dcfce7;
-      color: #15803d;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 18px;
-    }
-
-    .content {
-      padding: 42px 48px;
-      max-width: 1120px;
-    }
-
-    h1 {
-      font-size: 34px;
-      font-weight: 800;
-      margin-bottom: 10px;
-    }
-
-    .subtitle {
-      color: #4b5563;
-      font-size: 17px;
-      margin-bottom: 34px;
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      margin-bottom: 34px;
-    }
-
-    .summary-card {
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 28px;
-      display: flex;
-      align-items: center;
-      gap: 22px;
-    }
-
-    .summary-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      font-weight: bold;
-    }
-
-    .yellow {
-      background: #fefce8;
-      color: #ca8a04;
-    }
-
-    .red {
-      background: #fef2f2;
-      color: #dc2626;
-    }
-
-    .summary-number {
-      font-size: 30px;
-      font-weight: 500;
-    }
-
-    .summary-label {
-      color: #4b5563;
-      margin-top: 4px;
-    }
-
-    .summary-note {
-      margin-top: 18px;
-      font-size: 14px;
-    }
-
-    .note-yellow {
-      color: #a16207;
-    }
-
-    .note-red {
-      color: #dc2626;
-    }
-
-    .section-card {
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 28px;
-    }
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 28px;
-    }
-
-    .product-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 22px;
-      margin-bottom: 18px;
-      background: white;
-      position: relative;
-    }
-
-    .product-name {
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
-
-    .product-meta {
-      color: #4b5563;
-      display: flex;
-      gap: 18px;
-      font-size: 15px;
-      margin-bottom: 18px;
-    }
-
-    .days-badge {
-      position: absolute;
-      top: 22px;
-      right: 22px;
-      padding: 7px 14px;
-      border-radius: 999px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .badge-yellow {
-      border: 1px solid #fde68a;
-      background: #fefce8;
-      color: #a16207;
-    }
-
-    .badge-red {
-      border: 1px solid #fecaca;
-      background: #fef2f2;
-      color: #dc2626;
-    }
-
-    .recommendation {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      color: #166534;
-      border-radius: 12px;
-      padding: 16px 18px;
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-    }
-
-    .rec-title {
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-
-    .empty {
-      padding: 30px;
-      text-align: center;
-      color: #6b7280;
-      font-weight: 700;
-      border: 1px dashed #d1d5db;
-      border-radius: 12px;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/smartshelf.css') }}">
 </head>
 
 <body>
-  <aside class="sidebar">
-    <div>
-      <div class="brand">
-        <div class="logo">
-  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
-</div>
-        <div>
-          <h2>Smart Shelf</h2>
-          <p>Staff Portal</p>
-        </div>
-      </div>
-
-      <nav class="nav">
-        <div class="nav-item"><span>▦</span> Dashboard</div>
-        <div class="nav-item"><span>◈</span> Inventory</div>
-        <div class="nav-item"><span>◈</span> Add Product</div>
-        <div class="nav-item"><span>🛒</span> Record Sales</div>
-        <div class="nav-item active"><span>⚠</span> Expiry Alerts</div>
-      </nav>
-    </div>
-
-    <div class="logout">
-      <span style="font-size: 24px;">↪</span>
-      Logout
-    </div>
-  </aside>
-
-  <main class="main">
-    <header class="topbar">
-      <div class="profile">
-        <div>
-          <h4>Staff Member</h4>
-          <p>staff@example.com</p>
-        </div>
-        <div class="avatar">SM</div>
-      </div>
-    </header>
-
-    <section class="content">
-      <h1>Expiry Alerts</h1>
-      <p class="subtitle">Monitor products nearing expiration and view recommendation placeholders</p>
-
-      <div class="summary">
-        <div class="summary-card">
-          <div class="summary-icon yellow">⚠</div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
+          </div>
           <div>
-            <div class="summary-number" id="expiringCount">0</div>
-            <div class="summary-label">Expiring Soon</div>
-            <div class="summary-note note-yellow">Within 7 days</div>
+            <h2>Smart Shelf</h2>
+            <p>Staff Portal</p>
           </div>
         </div>
 
-        <div class="summary-card">
-          <div class="summary-icon red">✕</div>
+        <nav class="nav">
+          <a href="/dashboard"><span class="nav-icon">D</span> Dashboard</a>
+          <a href="/inventory-page"><span class="nav-icon">I</span> Inventory</a>
+          <a href="/add-product"><span class="nav-icon">+</span> Add Product</a>
+          <a href="/record-sale"><span class="nav-icon">S</span> Record Sale</a>
+          <a class="active" href="/expiry-alerts"><span class="nav-icon">!</span> Expiry Alerts</a>
+        </nav>
+      </div>
+
+      <a class="logout" href="#">Logout</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <span></span>
+          <input type="search" placeholder="Search inventory...">
+        </div>
+        <div class="profile">
           <div>
-            <div class="summary-number" id="expiredCount">0</div>
-            <div class="summary-label">Expired</div>
-            <div class="summary-note note-red">Requires immediate action</div>
+            <h4>Staff Member</h4>
+            <p>staff@example.com</p>
+          </div>
+          <div class="avatar">SM</div>
+        </div>
+      </header>
+
+      <section class="content">
+        <h1>Expiry Alerts</h1>
+        <p class="subtitle">Monitor products nearing expiration</p>
+
+        <div class="stats-grid" style="grid-template-columns:repeat(2,minmax(180px,1fr));">
+          <div class="panel stat-card">
+            <div>
+              <h3>Expiring Soon</h3>
+              <strong id="expiringCount">0</strong>
+            </div>
+            <div class="stat-badge orange-badge">!</div>
+          </div>
+
+          <div class="panel stat-card">
+            <div>
+              <h3>Expired</h3>
+              <strong id="expiredCount">0</strong>
+            </div>
+            <div class="stat-badge red-badge">X</div>
           </div>
         </div>
-      </div>
 
-      <div class="section-card">
-        <div class="section-title">
-          <span style="color:#ca8a04;">⚠</span>
-          Products Expiring Soon
+        <div class="panel list-panel">
+          <h2 class="panel-title">Products Expiring Soon</h2>
+          <div id="alertsList">
+            <div class="empty">Loading alerts...</div>
+          </div>
         </div>
-
-        <div id="alertsList">
-          <div class="empty">Loading alerts...</div>
-        </div>
-      </div>
-    </section>
-  </main>
+      </section>
+    </main>
+  </div>
 
   <script>
-    const API_URL = "http://127.0.0.1:5000";
+    const API_URL = "";
 
     function extractDaysLeft(message) {
       const match = message.match(/Days left:\s*(-?\d+)/i);
       return match ? Number(match[1]) : null;
-    }
-
-    function getRecommendation(daysLeft) {
-      if (daysLeft <= 1) {
-        return "Urgent: Apply discount and place near checkout.";
-      } else if (daysLeft <= 3) {
-        return "Urgent: Apply discount or bundle offers to reduce waste.";
-      } else {
-        return "Monitor closely. Consider promotions if needed.";
-      }
     }
 
     async function loadAlerts() {
@@ -425,36 +109,18 @@
 
       expiryAlerts.forEach(alert => {
         const daysLeft = extractDaysLeft(alert.message);
-        const isUrgent = daysLeft <= 2;
-
-        const card = document.createElement("div");
-        card.className = "product-card";
-
-        card.innerHTML = `
-          <div class="days-badge ${isUrgent ? "badge-red" : "badge-yellow"}">
-            ${daysLeft < 0 ? "Expired" : daysLeft + " days left"}
+        const row = document.createElement("div");
+        row.className = "list-row";
+        row.innerHTML = `
+          <div>
+            <div class="item-title">${alert.product_name || "Product"}</div>
+            <div class="item-meta">${alert.message}</div>
           </div>
-
-          <div class="product-name">${alert.product_name || "Product"}</div>
-
-          <div class="product-meta">
-            <span>Category unavailable</span>
-            <span>•</span>
-            <span>Stock info unavailable</span>
-            <span>•</span>
-            <span>${alert.message}</span>
-          </div>
-
-          <div class="recommendation">
-            <div style="font-size: 24px;">✣</div>
-            <div>
-              <div class="rec-title">AI Recommendation (Placeholder)</div>
-              <div>${getRecommendation(daysLeft)}</div>
-            </div>
+          <div class="item-side ${daysLeft <= 2 ? "danger-text" : ""}">
+            ${daysLeft < 0 ? "Expired" : daysLeft + " days"}
           </div>
         `;
-
-        list.appendChild(card);
+        list.appendChild(row);
       });
     }
 
