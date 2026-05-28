@@ -1,14 +1,10 @@
-from flask import Flask, request
+from flask import Flask, request, render_template, redirect
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
-from flask import Flask, request, render_template
-from flask import render_template, request, redirect
+from datetime import date, datetime
 
 from database import db
-from models import Product, Inventory, Sale
-from datetime import date
-from datetime import date, datetime
 from models import Product, Inventory, Sale, Alert
 
 load_dotenv()
@@ -32,37 +28,24 @@ db.init_app(app)
 def parse_date(value):
     return datetime.strptime(value, "%Y-%m-%d").date() if value else None
 
-def check_alerts():
-    products = Product.query.all()
+def create_low_stock_alert(product, inventory):
+    if inventory and inventory.quantity <= product.reorder_level:
+        existing_alert = Alert.query.filter_by(
+            product_id=product.product_id,
+            alert_type="LOW_STOCK",
+            status="active"
+        ).first()
 
-    for product in products:
-        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
-
-        if inventory and inventory.quantity <= product.reorder_level:
+        if existing_alert is None:
             alert = Alert(
                 product_id=product.product_id,
                 alert_type="LOW_STOCK",
-                message=f"{product.name} is low in stock. Current quantity: {inventory.quantity}",
+                message=f"{product.name} is low in stock. Current quantity: {inventory.quantity}.",
                 status="active",
                 created_at=datetime.now()
             )
             db.session.add(alert)
-
-        if product.expiry_date:
-            days_left = (product.expiry_date - date.today()).days
-
-            if days_left <= 3:
-                alert = Alert(
-                    product_id=product.product_id,
-                    alert_type="EXPIRY",
-                    message=f"{product.name} is expiring soon. Days left: {days_left}",
-                    status="active",
-                    created_at=datetime.now()
-                )
-                db.session.add(alert)
-
-    db.session.commit()
-
+            
 def create_expiry_alert(product):
     if product.expiry_date:
         days_left = (product.expiry_date - date.today()).days
@@ -82,8 +65,19 @@ def create_expiry_alert(product):
                     status="active",
                     created_at=datetime.now()
                 )
-
                 db.session.add(alert)
+
+def check_alerts():
+    products = Product.query.all()
+
+    for product in products:
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+
+        create_low_stock_alert(product, inventory)
+        create_expiry_alert(product)
+
+    db.session.commit()
+
 
 @app.route('/')
 @app.route('/dashboard')
