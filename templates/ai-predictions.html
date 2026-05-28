@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Predictions - Smart Shelf</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/smartshelf.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="logo">S</div>
+          <div>
+            <h2>Smart Shelf</h2>
+            <p>Staff Portal</p>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <a href="/dashboard"><span class="nav-icon">D</span> Dashboard</a>
+          <a href="/inventory-page"><span class="nav-icon">I</span> Inventory</a>
+          <a href="/add-product"><span class="nav-icon">+</span> Add Product</a>
+          <a href="/expiry-alerts"><span class="nav-icon">!</span> Expiry Alerts</a>
+          <a class="active" href="/ai-predictions"><span class="nav-icon">A</span> AI Predictions</a>
+        </nav>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <input type="search" placeholder="Search predictions...">
+        </div>
+        <div class="profile">
+          <div>
+            <h4>Staff Member</h4>
+            <p>staff@example.com</p>
+          </div>
+          <div class="avatar">SM</div>
+        </div>
+      </header>
+
+      <section class="content">
+        <h1>AI Predictions</h1>
+        <p class="subtitle">Predicted demand and reorder recommendations</p>
+
+        <div class="panel table-panel">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Current Stock</th>
+                <th>Predicted Demand</th>
+                <th>Recommended Reorder</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in predictions %}
+              <tr>
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.current_stock }}</td>
+                <td>{{ item.predicted_demand }}</td>
+                <td>{{ item.recommended_reorder_qty }}</td>
+                <td>{{ item.status }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5">No prediction data available.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

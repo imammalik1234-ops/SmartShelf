@@ -6,12 +6,12 @@ from flask import Flask, request, render_template
 from flask import render_template, request, redirect
 
 from database import db
-from models import Product, Inventory, Sale
+from models import Product, Inventory, Sale, Alert, Prediction
 from datetime import date
 from datetime import date, datetime
 from models import Product, Inventory, Sale, Alert
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = Flask(__name__)
 CORS(app)
@@ -62,7 +62,24 @@ def check_alerts():
                 db.session.add(alert)
 
     db.session.commit()
+def predict_demand_for_product(product_id):
+    sales = Sale.query.filter_by(product_id=product_id).order_by(Sale.sale_date.asc()).all()
 
+    if not sales:
+        return 0
+
+    quantities = [sale.quantity for sale in sales]
+
+    if len(quantities) < 3:
+        return round(sum(quantities) / len(quantities))
+
+    last_3 = quantities[-3:]
+    return round(sum(last_3) / len(last_3))
+
+
+def calculate_reorder_qty(predicted_demand, current_stock):
+    reorder_qty = predicted_demand - current_stock
+    return reorder_qty if reorder_qty > 0 else 0
 def create_expiry_alert(product):
     if product.expiry_date:
         days_left = (product.expiry_date - date.today()).days
@@ -422,7 +439,73 @@ def add_product():
         return redirect('/inventory-page')
 
     return render_template('add-product.html')
+@app.route('/api/predictions', methods=['GET'])
+def api_predictions():
+    products = Product.query.all()
+    result = []
 
+    for product in products:
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        current_stock = inventory.quantity if inventory else 0
+
+        predicted_demand = predict_demand_for_product(product.product_id)
+        reorder_qty = calculate_reorder_qty(predicted_demand, current_stock)
+
+        result.append({
+            "product_id": product.product_id,
+            "product_name": product.name,
+            "current_stock": current_stock,
+            "predicted_demand": predicted_demand,
+            "recommended_reorder_qty": reorder_qty
+        })
+
+    return result
+@app.route('/api/predictions', methods=['GET'])
+def get_predictions():
+    products = Product.query.all()
+    result = []
+
+    for product in products:
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        current_stock = inventory.quantity if inventory else 0
+
+        predicted_demand = predict_demand_for_product(product.product_id)
+        reorder_qty = calculate_reorder_qty(predicted_demand, current_stock)
+
+        result.append({
+            "product_id": product.product_id,
+            "product_name": product.name,
+            "current_stock": current_stock,
+            "predicted_demand": predicted_demand,
+            "recommended_reorder_qty": reorder_qty
+        })
+
+    return result
+@app.route('/ai-predictions')
+def ai_predictions_page():
+    products = Product.query.all()
+    predictions = []
+
+    for product in products:
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        current_stock = inventory.quantity if inventory else 0
+
+        predicted_demand = predict_demand_for_product(product.product_id)
+        reorder_qty = calculate_reorder_qty(predicted_demand, current_stock)
+
+        status = "Sufficient"
+        if reorder_qty > 0:
+            status = "Restock Soon"
+
+        predictions.append({
+            "product_name": product.name,
+            "current_stock": current_stock,
+            "predicted_demand": predicted_demand,
+            "recommended_reorder_qty": reorder_qty,
+            "status": status
+        })
+
+    return render_template("ai-predictions.html", predictions=predictions)
 if __name__ == '__main__':
     app.run(debug=True)
     
