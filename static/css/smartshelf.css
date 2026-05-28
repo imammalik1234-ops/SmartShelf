@@ -281,6 +281,9 @@ select:focus {
   border-radius: 8px;
   font-weight: 800;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary {
@@ -304,7 +307,16 @@ select:focus {
 }
 
 .row-actions form {
-  display: inline;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stock-adjust-input {
+  width: 68px;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 12px;
 }
 
 .action-link {
@@ -381,6 +393,10 @@ select:focus {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   gap: 22px;
+}
+
+.two-stat-grid {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
 }
 
 .list-panel {
@@ -462,6 +478,11 @@ th {
   display: none;
   margin-top: 18px;
   font-weight: 700;
+}
+
+.full-width-action {
+  width: 100%;
+  margin-top: 6px;
 }
 
 .success {

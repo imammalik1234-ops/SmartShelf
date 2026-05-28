@@ -1,100 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventory - Smart Shelf</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/smartshelf.css') }}">
-</head>
+{% extends "base.html" %}
+{% set active_page = "inventory" %}
 
-<body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div>
-        <div class="brand">
-          <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
-          </div>
-          <div>
-            <h2>Smart Shelf</h2>
-            <p>Staff Portal</p>
-          </div>
-        </div>
+{% block title %}Inventory - Smart Shelf{% endblock %}
 
-        <nav class="nav">
-          <a href="/dashboard"><span class="nav-icon">D</span> Dashboard</a>
-          <a class="active" href="/inventory-page"><span class="nav-icon">I</span> Inventory</a>
-          <a href="/add-product"><span class="nav-icon">+</span> Add Product</a>
-          <a href="/record-sale"><span class="nav-icon">S</span> Record Sale</a>
-          <a href="/expiry-alerts"><span class="nav-icon">!</span> Expiry Alerts</a>
-        </nav>
-      </div>
+{% block content %}
+  <h1>Inventory</h1>
+  <p class="subtitle">Track product quantities, suppliers, prices, and expiry dates</p>
 
-      <a class="logout" href="#">Logout</a>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <div class="search">
-          <span></span>
-          <input type="search" placeholder="Search inventory...">
-        </div>
-        <div class="profile">
-          <div>
-            <h4>Staff Member</h4>
-            <p>staff@example.com</p>
-          </div>
-          <div class="avatar">SM</div>
-        </div>
-      </header>
-
-      <section class="content">
-        <h1>Inventory</h1>
-        <p class="subtitle">Track product quantities, suppliers, prices, and expiry dates</p>
-
-        <div class="panel table-panel">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Supplier</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Expiry</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for product in products %}
-                <tr>
-                  <td>{{ product.product_id }}</td>
-                  <td>{{ product.name }}</td>
-                  <td>{{ product.category }}</td>
-                  <td>{{ product.supplier }}</td>
-                  <td>{{ product.quantity }}</td>
-                  <td>${{ product.unit_price }}</td>
-                  <td>{{ product.expiry_date }}</td>
-                  <td>
-                    <div class="row-actions">
-                      <a class="action-link edit-link" href="/edit-product/{{ product.product_id }}">Edit</a>
-                      <form method="POST" action="/delete-product/{{ product.product_id }}" onsubmit="return confirm('Delete this product? This will remove its inventory, sales, and alerts.');">
-                        <button class="action-link delete-link" type="submit">Delete</button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              {% else %}
-                <tr>
-                  <td colspan="8" class="empty">No inventory items found.</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+  <div class="panel table-panel">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Supplier</th>
+          <th>Quantity</th>
+          <th>Status</th>
+          <th>Price</th>
+          <th>Expiry</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+          <tr>
+            <td>{{ product.product_id }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.category }}</td>
+            <td>{{ product.supplier }}</td>
+            <td>{{ product.quantity }}</td>
+            <td class="{{ 'danger-text' if product.stock_status != 'In Stock' else 'ok-text' }}">{{ product.stock_status }}</td>
+            <td>${{ product.unit_price }}</td>
+            <td>{{ product.expiry_date }}</td>
+            <td>
+              <div class="row-actions">
+                <a class="action-link edit-link" href="/edit-product/{{ product.product_id }}">Edit</a>
+                <form method="POST" action="/remove-stock/{{ product.product_id }}">
+                  <input class="stock-adjust-input" type="number" name="quantity_to_remove" min="1" max="{{ product.quantity }}" placeholder="Qty" required>
+                  <button class="action-link edit-link" type="submit">Remove Stock</button>
+                </form>
+                <form method="POST" action="/delete-product/{{ product.product_id }}" onsubmit="return confirm('Delete this product? This will remove its inventory, sales, and alerts.');">
+                  <button class="action-link delete-link" type="submit">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="9" class="empty">No inventory items found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-</body>
-</html>
+{% endblock %}
