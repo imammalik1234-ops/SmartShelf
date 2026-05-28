@@ -54,32 +54,40 @@
         <p class="subtitle">Quick overview of inventory status</p>
 
         <div class="stats-grid">
-          <div class="panel stat-card">
-            <div>
-              <h3>Total Products</h3>
-              <strong>{{ total_products }}</strong>
-            </div>
-            <div class="stat-badge green-badge">I</div>
-          </div>
+  <div class="panel stat-card">
+    <div>
+      <h3>Total Products</h3>
+      <strong>{{ total_products }}</strong>
+    </div>
+    <div class="stat-badge green-badge"></div>
+  </div>
 
-          <div class="panel stat-card">
-            <div>
-              <h3>Low Stock Items</h3>
-              <strong>{{ low_stock }}</strong>
-            </div>
-            <div class="stat-badge orange-badge">L</div>
-          </div>
+  <div class="panel stat-card">
+    <div>
+      <h3>Low Stock Items</h3>
+      <strong>{{ low_stock }}</strong>
+    </div>
+    <div class="stat-badge orange-badge"></div>
+  </div>
 
-          <div class="panel stat-card">
-            <div>
-              <h3>Expiring Soon</h3>
-              <strong>{{ expiring }}</strong>
-            </div>
-            <div class="stat-badge red-badge">!</div>
-          </div>
-        </div>
+  <div class="panel stat-card">
+    <div>
+      <h3>Expiring Soon</h3>
+      <strong>{{ expiring }}</strong>
+    </div>
+    <div class="stat-badge red-badge"></div>
+  </div>
 
-        <div class="dashboard-grid">
+  <div class="panel stat-card">
+    <div>
+      <h3>Reorder Needed</h3>
+      <strong>{{ reorder_needed }}</strong>
+    </div>
+    <div class="stat-badge blue-badge"></div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
           <div class="panel list-panel">
             <h2 class="panel-title">Recent Products</h2>
             {% for product in recent_products %}
