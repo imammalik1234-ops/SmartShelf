@@ -7,7 +7,7 @@
   <h1>Alerts</h1>
   <p class="subtitle">Monitor low stock and products nearing expiration</p>
 
-  <div class="stats-grid two-stat-grid">
+  <div class="stats-grid">
     <div class="panel stat-card">
       <div>
         <h3>Expiring Soon</h3>
@@ -22,6 +22,14 @@
         <strong id="lowStockCount">0</strong>
       </div>
       <div class="stat-badge red-badge">L</div>
+    </div>
+
+    <div class="panel stat-card">
+      <div>
+        <h3>Expired</h3>
+        <strong id="expiredCount">0</strong>
+      </div>
+      <div class="stat-badge red-badge">X</div>
     </div>
   </div>
 
@@ -50,9 +58,11 @@
       const expiryAlerts = activeAlerts.filter(alert => alert.alert_type === "EXPIRY");
       const expiringSoon = expiryAlerts.filter(alert => extractDaysLeft(alert.message) >= 0);
       const lowStockAlerts = activeAlerts.filter(alert => alert.alert_type === "LOW_STOCK");
+      const expiredAlerts = activeAlerts.filter(alert => alert.alert_type === "EXPIRED");
 
       document.getElementById("expiringCount").textContent = expiringSoon.length;
       document.getElementById("lowStockCount").textContent = lowStockAlerts.length;
+      document.getElementById("expiredCount").textContent = expiredAlerts.length;
 
       const list = document.getElementById("alertsList");
       list.innerHTML = "";
@@ -71,8 +81,8 @@
             <div class="item-title">${alert.product_name || "Product"}</div>
             <div class="item-meta">${alert.message}</div>
           </div>
-          <div class="item-side ${alert.alert_type === "LOW_STOCK" || daysLeft <= 2 ? "danger-text" : ""}">
-            ${alert.alert_type === "LOW_STOCK" ? "Low stock" : daysLeft < 0 ? "Expired" : daysLeft + " days"}
+          <div class="item-side ${alert.alert_type !== "EXPIRY" || daysLeft <= 2 ? "danger-text" : ""}">
+            ${alert.alert_type === "LOW_STOCK" ? "Low stock" : alert.alert_type === "EXPIRED" ? "Expired" : daysLeft + " days"}
           </div>
         `;
         list.appendChild(row);

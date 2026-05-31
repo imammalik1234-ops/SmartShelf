@@ -338,7 +338,7 @@ select:focus {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 22px;
   margin-bottom: 28px;
 }
@@ -393,6 +393,10 @@ select:focus {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   gap: 22px;
+}
+
+.dashboard-expired-panel {
+  margin-top: 22px;
 }
 
 .two-stat-grid {
@@ -478,6 +482,13 @@ th {
   display: none;
   margin-top: 18px;
   font-weight: 700;
+}
+
+.validation-summary {
+  display: block;
+  margin-top: 0;
+  margin-bottom: 18px;
+  line-height: 1.5;
 }
 
 .full-width-action {

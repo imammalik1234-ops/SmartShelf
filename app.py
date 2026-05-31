@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 
 from dotenv import load_dotenv
@@ -27,6 +27,80 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 
+PRODUCT_CATALOG = {
+    "Dairy": {
+        "Milk": {
+            "suppliers": ["Nestle", "Fresh Farms Co.", "Farmhouse Dairy"],
+            "variants": ["Full Cream Milk", "Low Fat Milk", "Chocolate Milk"],
+        },
+        "Cheese": {
+            "suppliers": ["Fresh Farms Co.", "Dairy Best"],
+            "variants": ["Cheddar Cheese", "Mozzarella Cheese", "Cheese Slices"],
+        },
+        "Yogurt": {
+            "suppliers": ["Dairy Best", "Farmhouse Dairy"],
+            "variants": ["Plain Yogurt", "Strawberry Yogurt", "Greek Yogurt"],
+        },
+    },
+    "Beverages": {
+        "Coke": {
+            "suppliers": ["Coca-Cola", "Local Beverage Distributor"],
+            "variants": ["Coke 200ml", "Coke 500ml", "Coke 1.5L", "Diet Coke", "Coke Zero"],
+        },
+        "Pepsi": {
+            "suppliers": ["PepsiCo", "Local Beverage Distributor"],
+            "variants": ["Pepsi 200ml", "Pepsi 500ml", "Pepsi 1.5L", "Pepsi Max"],
+        },
+        "Sprite": {
+            "suppliers": ["Coca-Cola", "Local Beverage Distributor"],
+            "variants": ["Sprite 200ml", "Sprite 500ml", "Sprite 1.5L"],
+        },
+    },
+    "Bakery": {
+        "Bread": {
+            "suppliers": ["Gardenia", "Sunshine Bakery", "Local Bakery"],
+            "variants": ["White Bread", "Wholemeal Bread", "Multigrain Bread"],
+        },
+        "Bun": {
+            "suppliers": ["Sunshine Bakery", "Local Bakery"],
+            "variants": ["Plain Bun", "Cream Bun", "Red Bean Bun"],
+        },
+        "Croissant": {
+            "suppliers": ["Local Bakery", "French Bakehouse"],
+            "variants": ["Butter Croissant", "Chocolate Croissant"],
+        },
+    },
+    "Produce": {
+        "Apple": {
+            "suppliers": ["Fresh Farms Co.", "Green Harvest"],
+            "variants": ["Red Apple", "Green Apple", "Fuji Apple"],
+        },
+        "Banana": {
+            "suppliers": ["Green Harvest", "Fresh Farms Co."],
+            "variants": ["Cavendish Banana", "Mini Banana"],
+        },
+        "Lettuce": {
+            "suppliers": ["Green Harvest", "Local Farm"],
+            "variants": ["Romaine Lettuce", "Butterhead Lettuce"],
+        },
+    },
+    "Pantry": {
+        "Rice": {
+            "suppliers": ["Golden Grain", "Pantry Supply Co."],
+            "variants": ["White Rice 5kg", "Brown Rice 5kg", "Basmati Rice 5kg"],
+        },
+        "Pasta": {
+            "suppliers": ["Pantry Supply Co.", "Italian Foods"],
+            "variants": ["Spaghetti", "Macaroni", "Penne"],
+        },
+        "Cereal": {
+            "suppliers": ["Nestle", "Kellogg's"],
+            "variants": ["Corn Flakes", "Oat Cereal", "Chocolate Cereal"],
+        },
+    },
+}
+
+
 def parse_date(value):
     return datetime.strptime(value, "%Y-%m-%d").date() if value else None
 
@@ -41,13 +115,183 @@ def form_float(name, default=0):
     return float(value) if value not in (None, "") else default
 
 
+def catalog_selection_for_name(name, category=None):
+    categories = [category] if category in PRODUCT_CATALOG else PRODUCT_CATALOG.keys()
+
+    for category_name in categories:
+        for product_name, product_info in PRODUCT_CATALOG[category_name].items():
+            if name == product_name or name in product_info["variants"]:
+                return {
+                    "category": category_name,
+                    "product": product_name,
+                    "variant": name if name in product_info["variants"] else "",
+                }
+
+    return {
+        "category": category or "",
+        "product": name or "",
+        "variant": "",
+    }
+
+
+def product_form_defaults(product=None, inventory=None):
+    selection = catalog_selection_for_name(product.name, product.category) if product else {}
+
+    return {
+        "category": selection.get("category", ""),
+        "product": selection.get("product", ""),
+        "variant": selection.get("variant", ""),
+        "name": product.name if product else "",
+        "supplier": product.supplier if product else "",
+        "quantity": str(inventory.quantity) if inventory else "",
+        "expiry_date": product.expiry_date.isoformat() if product and product.expiry_date else "",
+        "unit_price": str(product.unit_price) if product and product.unit_price is not None else "",
+        "reorder_level": str(product.reorder_level) if product and product.reorder_level is not None else "",
+    }
+
+
+def form_data_from_request():
+    return {
+        "category": request.form.get("category", "").strip(),
+        "product": request.form.get("product", "").strip(),
+        "variant": request.form.get("variant", "").strip(),
+        "name": request.form.get("name", "").strip(),
+        "supplier": request.form.get("supplier", "").strip(),
+        "quantity": request.form.get("quantity", "").strip(),
+        "expiry_date": request.form.get("expiry_date", "").strip(),
+        "unit_price": request.form.get("unit_price", "").strip(),
+        "reorder_level": request.form.get("reorder_level", "").strip(),
+    }
+
+
+def validation_data_from_json(data):
+    category = str(data.get("category", "")).strip()
+    name = str(data.get("name", "")).strip()
+    product = str(data.get("product", "")).strip()
+    variant = str(data.get("variant", "")).strip()
+
+    if name and not product:
+        selection = catalog_selection_for_name(name, category)
+        product = selection["product"]
+        variant = selection["variant"]
+
+    return {
+        "category": category,
+        "product": product,
+        "variant": variant,
+        "name": name,
+        "supplier": str(data.get("supplier", "")).strip(),
+        "quantity": str(data.get("quantity", "")).strip(),
+        "expiry_date": str(data.get("expiry_date", "")).strip(),
+        "unit_price": str(data.get("unit_price", "")).strip(),
+        "reorder_level": str(data.get("reorder_level", "")).strip(),
+    }
+
+
+def validate_product_form(data, require_future_expiry=False):
+    errors = []
+    category = data.get("category", "").strip()
+    product = data.get("product", "").strip()
+    variant = data.get("variant", "").strip()
+    supplier = data.get("supplier", "").strip()
+
+    if not category:
+        errors.append("Please select a category.")
+    elif category not in PRODUCT_CATALOG:
+        errors.append("Please select a valid category.")
+
+    product_info = None
+    if category in PRODUCT_CATALOG:
+        product_info = PRODUCT_CATALOG[category].get(product)
+
+    if not product:
+        errors.append("Please select a product.")
+    elif product_info is None:
+        errors.append("Please select a product that belongs to the chosen category.")
+
+    product_name = product
+    if product_info:
+        variants = product_info.get("variants", [])
+        suppliers = product_info.get("suppliers", [])
+
+        if variants:
+            if not variant:
+                errors.append("Please select a product variant.")
+            elif variant not in variants:
+                errors.append("Please select a valid variant for the chosen product.")
+            else:
+                product_name = variant
+
+        if not supplier:
+            errors.append("Please select a supplier.")
+        elif supplier not in suppliers:
+            errors.append("Please select a supplier available for the chosen product.")
+    elif not supplier:
+        errors.append("Supplier cannot be empty.")
+
+    try:
+        quantity = int(data.get("quantity", ""))
+        if quantity < 0:
+            errors.append("Quantity must be greater than or equal to 0.")
+    except ValueError:
+        quantity = 0
+        errors.append("Quantity must be a whole number.")
+
+    try:
+        unit_price = float(data.get("unit_price", ""))
+        if unit_price <= 0:
+            errors.append("Selling price must be greater than 0.")
+    except ValueError:
+        unit_price = 0
+        errors.append("Selling price must be a valid number greater than 0.")
+
+    try:
+        reorder_level = int(data.get("reorder_level", ""))
+        if reorder_level < 0:
+            errors.append("Reorder level must be greater than or equal to 0.")
+    except ValueError:
+        reorder_level = 0
+        errors.append("Reorder level must be a whole number.")
+
+    expiry_date = parse_date(data.get("expiry_date", ""))
+    if expiry_date is None:
+        errors.append("Please select an expiry date.")
+    elif require_future_expiry and expiry_date <= date.today():
+        errors.append("Expiry date must be a future date after today.")
+
+    if not product_name.strip():
+        errors.append("Product name cannot be empty.")
+
+    return errors, {
+        "name": product_name.strip(),
+        "category": category,
+        "supplier": supplier,
+        "quantity": quantity,
+        "unit_price": unit_price,
+        "reorder_level": reorder_level,
+        "expiry_date": expiry_date,
+    }
+
+
+def render_product_form(template_name, form_data=None, errors=None, **context):
+    return render_template(
+        template_name,
+        catalog=PRODUCT_CATALOG,
+        form_data=form_data or product_form_defaults(),
+        errors=errors or [],
+        today=date.today().isoformat(),
+        tomorrow=(date.today() + timedelta(days=1)).isoformat(),
+        **context,
+    )
+
+
 def inventory_for_product(product_id):
     return Inventory.query.filter_by(product_id=product_id).first()
 
 
 def stock_status(product, quantity):
-    if quantity <= 0:
-        return "Out of Stock"
+    if product.expiry_date and product.expiry_date < date.today():
+        return "Expired"
     if quantity <= (product.reorder_level or 0):
         return "Low Stock"
     return "In Stock"
@@ -85,6 +329,10 @@ def resolve_alert(product, alert_type):
 def create_low_stock_alert(product, inventory):
     quantity = inventory.quantity if inventory else 0
 
+    if product.expiry_date and product.expiry_date < date.today():
+        resolve_alert(product, "LOW_STOCK")
+        return
+
     if quantity <= (product.reorder_level or 0):
         upsert_alert(
             product,
@@ -98,10 +346,19 @@ def create_low_stock_alert(product, inventory):
 def create_expiry_alert(product):
     if not product.expiry_date:
         resolve_alert(product, "EXPIRY")
+        resolve_alert(product, "EXPIRED")
         return
 
     days_left = (product.expiry_date - date.today()).days
-    if days_left <= 7:
+    if days_left < 0:
+        resolve_alert(product, "EXPIRY")
+        upsert_alert(
+            product,
+            "EXPIRED",
+            f"{product.name} has expired. Days expired: {abs(days_left)}.",
+        )
+    elif days_left <= 7:
+        resolve_alert(product, "EXPIRED")
         upsert_alert(
             product,
             "EXPIRY",
@@ -109,6 +366,7 @@ def create_expiry_alert(product):
         )
     else:
         resolve_alert(product, "EXPIRY")
+        resolve_alert(product, "EXPIRED")
 
 
 def check_alerts():
@@ -197,9 +455,11 @@ def dashboard():
     total_products = len(products)
     low_stock = 0
     expiring = 0
+    expired = 0
     today = date.today()
     recent_products = []
     expiring_products = []
+    expired_products = []
 
     for product in products:
         quantity = product["quantity"]
@@ -212,12 +472,20 @@ def dashboard():
             "stock_status": status,
         })
 
-        if status in ("Low Stock", "Out of Stock"):
+        if status == "Low Stock":
             low_stock += 1
 
         if product["expiry_date"]:
             days_left = (product["expiry_date"] - today).days
-            if days_left <= 7:
+            if days_left < 0:
+                expired += 1
+                expired_products.append({
+                    "name": product["name"],
+                    "category": product["category"],
+                    "quantity": quantity,
+                    "days_expired": abs(days_left),
+                })
+            elif days_left <= 7:
                 expiring += 1
                 expiring_products.append({
                     "name": product["name"],
@@ -231,8 +499,10 @@ def dashboard():
         total_products=total_products,
         low_stock=low_stock,
         expiring=expiring,
+        expired=expired,
         recent_products=recent_products[:5],
         expiring_products=expiring_products[:5],
+        expired_products=expired_products[:5],
     )
 
 
@@ -256,22 +526,29 @@ def get_products():
 
 @app.route("/products", methods=["POST"])
 def add_product_api():
-    data = request.get_json()
+    data = request.get_json() or {}
+    errors, cleaned = validate_product_form(
+        validation_data_from_json(data),
+        require_future_expiry=True,
+    )
+
+    if errors:
+        return {"errors": errors}, 400
 
     product = Product(
-        name=data["name"],
-        category=data.get("category"),
-        supplier=data.get("supplier"),
-        unit_price=float(data.get("unit_price") or 0),
-        expiry_date=parse_date(data.get("expiry_date")),
-        reorder_level=int(data.get("reorder_level") or 0),
+        name=cleaned["name"],
+        category=cleaned["category"],
+        supplier=cleaned["supplier"],
+        unit_price=cleaned["unit_price"],
+        expiry_date=cleaned["expiry_date"],
+        reorder_level=cleaned["reorder_level"],
     )
     db.session.add(product)
     db.session.flush()
 
     inventory = Inventory(
         product_id=product.product_id,
-        quantity=int(data.get("quantity") or 0),
+        quantity=cleaned["quantity"],
         last_updated=datetime.now(),
     )
     db.session.add(inventory)
@@ -289,21 +566,25 @@ def update_product_api(product_id):
     if product is None:
         return {"error": "Product not found"}, 404
 
-    data = request.get_json()
+    data = request.get_json() or {}
+    errors, cleaned = validate_product_form(validation_data_from_json(data))
+    if errors:
+        return {"errors": errors}, 400
+
     inventory = inventory_for_product(product_id)
 
-    product.name = data["name"]
-    product.category = data.get("category")
-    product.supplier = data.get("supplier")
-    product.unit_price = float(data.get("unit_price") or 0)
-    product.expiry_date = parse_date(data.get("expiry_date"))
-    product.reorder_level = int(data.get("reorder_level") or 0)
+    product.name = cleaned["name"]
+    product.category = cleaned["category"]
+    product.supplier = cleaned["supplier"]
+    product.unit_price = cleaned["unit_price"]
+    product.expiry_date = cleaned["expiry_date"]
+    product.reorder_level = cleaned["reorder_level"]
 
     if inventory is None:
         inventory = Inventory(product_id=product_id)
         db.session.add(inventory)
 
-    inventory.quantity = int(data.get("quantity") or 0)
+    inventory.quantity = cleaned["quantity"]
     inventory.last_updated = datetime.now()
 
     create_low_stock_alert(product, inventory)
@@ -349,20 +630,30 @@ def inventory_page():
 @app.route("/add-product", methods=["GET", "POST"])
 def add_product():
     if request.method == "POST":
+        form_data = form_data_from_request()
+        errors, cleaned = validate_product_form(form_data, require_future_expiry=True)
+
+        if errors:
+            return render_product_form(
+                "add-product.html",
+                form_data=form_data,
+                errors=errors,
+            ), 400
+
         product = Product(
-            name=request.form["name"],
-            category=request.form["category"],
-            supplier=request.form["supplier"],
-            unit_price=form_float("unit_price"),
-            expiry_date=parse_date(request.form.get("expiry_date")),
-            reorder_level=form_int("reorder_level"),
+            name=cleaned["name"],
+            category=cleaned["category"],
+            supplier=cleaned["supplier"],
+            unit_price=cleaned["unit_price"],
+            expiry_date=cleaned["expiry_date"],
+            reorder_level=cleaned["reorder_level"],
         )
         db.session.add(product)
         db.session.flush()
 
         inventory = Inventory(
             product_id=product.product_id,
-            quantity=form_int("quantity"),
+            quantity=cleaned["quantity"],
             last_updated=datetime.now(),
         )
         db.session.add(inventory)
@@ -373,7 +664,7 @@ def add_product():
 
         return redirect("/inventory-page")
 
-    return render_template("add-product.html")
+    return render_product_form("add-product.html")
 
 
 @app.route("/edit-product/<int:product_id>", methods=["GET", "POST"])
@@ -385,18 +676,30 @@ def edit_product(product_id):
     inventory = inventory_for_product(product_id)
 
     if request.method == "POST":
-        product.name = request.form["name"]
-        product.category = request.form["category"]
-        product.supplier = request.form["supplier"]
-        product.unit_price = form_float("unit_price")
-        product.expiry_date = parse_date(request.form.get("expiry_date"))
-        product.reorder_level = form_int("reorder_level")
+        form_data = form_data_from_request()
+        errors, cleaned = validate_product_form(form_data)
+
+        if errors:
+            return render_product_form(
+                "edit-product.html",
+                form_data=form_data,
+                errors=errors,
+                product=product,
+                quantity=inventory.quantity if inventory else 0,
+            ), 400
+
+        product.name = cleaned["name"]
+        product.category = cleaned["category"]
+        product.supplier = cleaned["supplier"]
+        product.unit_price = cleaned["unit_price"]
+        product.expiry_date = cleaned["expiry_date"]
+        product.reorder_level = cleaned["reorder_level"]
 
         if inventory is None:
             inventory = Inventory(product_id=product_id)
             db.session.add(inventory)
 
-        inventory.quantity = form_int("quantity")
+        inventory.quantity = cleaned["quantity"]
         inventory.last_updated = datetime.now()
 
         create_low_stock_alert(product, inventory)
@@ -407,6 +710,10 @@ def edit_product(product_id):
 
     return render_template(
         "edit-product.html",
+        catalog=PRODUCT_CATALOG,
+        form_data=product_form_defaults(product, inventory),
+        errors=[],
+        today=date.today().isoformat(),
         product=product,
         quantity=inventory.quantity if inventory else 0,
     )

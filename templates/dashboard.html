@@ -31,6 +31,14 @@
       </div>
       <div class="stat-badge red-badge">!</div>
     </div>
+
+    <div class="panel stat-card">
+      <div>
+        <h3>Expired Products</h3>
+        <strong>{{ expired }}</strong>
+      </div>
+      <div class="stat-badge red-badge">X</div>
+    </div>
   </div>
 
   <div class="dashboard-grid">
@@ -71,5 +79,23 @@
         <div class="empty">No products expiring soon.</div>
       {% endfor %}
     </div>
+  </div>
+
+  <div class="panel list-panel dashboard-expired-panel">
+    <h2 class="panel-title">Expired Products</h2>
+    {% for product in expired_products %}
+      <div class="list-row">
+        <div>
+          <div class="item-title">{{ product.name }}</div>
+          <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
+        </div>
+        <div class="item-side danger-text">
+          <div>{{ product.days_expired }} days expired</div>
+          <div>Qty: {{ product.quantity }}</div>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">No expired products.</div>
+    {% endfor %}
   </div>
 {% endblock %}
