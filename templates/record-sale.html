@@ -1,79 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Record Sale - Smart Shelf</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/smartshelf.css') }}">
-</head>
+{% extends "base.html" %}
+{% set active_page = "record_sale" %}
 
-<body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div>
-        <div class="brand">
-          <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
-          </div>
-          <div>
-            <h2>Smart Shelf</h2>
-            <p>Staff Portal</p>
-          </div>
-        </div>
+{% block title %}Record Sale - Smart Shelf{% endblock %}
 
-        <nav class="nav">
-          <a href="/dashboard"><span class="nav-icon">D</span> Dashboard</a>
-          <a href="/inventory-page"><span class="nav-icon">I</span> Inventory</a>
-          <a href="/add-product"><span class="nav-icon">+</span> Add Product</a>
-          <a class="active" href="/record-sale"><span class="nav-icon">S</span> Record Sale</a>
-          <a href="/expiry-alerts"><span class="nav-icon">!</span> Expiry Alerts</a>
-        </nav>
-      </div>
+{% block content %}
+  <a class="back-link" href="/inventory-page">&lt; Back to Inventory</a>
+  <h1>Record Sale</h1>
+  <p class="subtitle">Enter sale details to update inventory and track sales</p>
 
-      <a class="logout" href="#">Logout</a>
-    </aside>
+  <div class="panel form-panel">
+    <label for="productSelect">Product *</label>
+    <select id="productSelect">
+      <option value="">Select a product</option>
+    </select>
 
-    <main class="main">
-      <header class="topbar">
-        <div class="search">
-          <span></span>
-          <input type="search" placeholder="Search inventory...">
-        </div>
-        <div class="profile">
-          <div>
-            <h4>Staff Member</h4>
-            <p>staff@example.com</p>
-          </div>
-          <div class="avatar">SM</div>
-        </div>
-      </header>
+    <div class="stock-box" id="currentStock">Current Stock: --</div>
 
-      <section class="content">
-        <a class="back-link" href="/inventory-page">&lt; Back to Inventory</a>
-        <h1>Record Sale</h1>
-        <p class="subtitle">Enter sale details to update inventory and track sales</p>
+    <label for="quantitySold">Quantity Sold *</label>
+    <input type="number" id="quantitySold" placeholder="0" min="1">
 
-        <div class="panel form-panel">
-          <label for="productSelect">Product *</label>
-          <select id="productSelect">
-            <option value="">Select a product</option>
-          </select>
+    <label for="saleDate">Sale Date *</label>
+    <input type="date" id="saleDate">
 
-          <div class="stock-box" id="currentStock">Current Stock: --</div>
-
-          <label for="quantitySold">Quantity Sold *</label>
-          <input type="number" id="quantitySold" placeholder="0" min="1">
-
-          <label for="saleDate">Sale Date *</label>
-          <input type="date" id="saleDate">
-
-          <button class="btn btn-primary" style="width:100%;margin-top:6px;" onclick="recordSale()">Record Sale</button>
-          <p id="message" class="message"></p>
-        </div>
-      </section>
-    </main>
+    <button class="btn btn-primary full-width-action" type="button" onclick="recordSale()">Record Sale</button>
+    <p id="message" class="message"></p>
   </div>
+{% endblock %}
 
+{% block scripts %}
   <script>
     const API_URL = "";
     let inventoryData = [];
@@ -151,5 +105,4 @@
 
     loadProductsAndInventory();
   </script>
-</body>
-</html>
+{% endblock %}

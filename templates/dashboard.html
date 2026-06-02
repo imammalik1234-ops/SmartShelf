@@ -1,133 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Smart Shelf</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/smartshelf.css') }}">
-</head>
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
 
-<body>
-  <div class="app-shell">
-    <aside class="sidebar">
+{% block title %}Dashboard - Smart Shelf{% endblock %}
+
+{% block content %}
+  <h1>Staff Dashboard</h1>
+  <p class="subtitle">Quick overview of inventory status</p>
+
+  <div class="stats-grid">
+    <div class="panel stat-card">
       <div>
-        <div class="brand">
-          <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
-          </div>
-          <div>
-            <h2>Smart Shelf</h2>
-            <p>Staff Portal</p>
-          </div>
-        </div>
-
-        <nav class="nav">
-          <a href="/ai-predictions"><span class="nav-icon">A</span> AI Predictions</a>
-          <a class="active" href="/dashboard"><span class="nav-icon">D</span> Dashboard</a>
-          <a href="/inventory-page"><span class="nav-icon">I</span> Inventory</a>
-          <a href="/add-product"><span class="nav-icon">+</span> Add Product</a>
-          <a href="/record-sale"><span class="nav-icon">S</span> Record Sale</a>
-          <a href="/expiry-alerts"><span class="nav-icon">!</span> Expiry Alerts</a>
-        </nav>
+        <h3>Total Products</h3>
+        <strong>{{ total_products }}</strong>
       </div>
+      <div class="stat-badge green-badge">I</div>
+    </div>
 
-      <a class="logout" href="#">Logout</a>
-    </aside>
+    <div class="panel stat-card">
+      <div>
+        <h3>Low Stock Items</h3>
+        <strong>{{ low_stock }}</strong>
+      </div>
+      <div class="stat-badge orange-badge">L</div>
+    </div>
 
-    <main class="main">
-      <header class="topbar">
-        <div class="search">
-          <span></span>
-          <input type="search" placeholder="Search inventory...">
-        </div>
-        <div class="profile">
+    <div class="panel stat-card">
+      <div>
+        <h3>Expiring Soon</h3>
+        <strong>{{ expiring }}</strong>
+      </div>
+      <div class="stat-badge red-badge">!</div>
+    </div>
+
+    <div class="panel stat-card">
+      <div>
+        <h3>Reorder Needed</h3>
+        <strong>{{ reorder_needed }}</strong>
+      </div>
+      <div class="stat-badge blue-badge">R</div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="panel list-panel">
+      <h2 class="panel-title">Recent Products</h2>
+      {% for product in recent_products %}
+        <div class="list-row">
           <div>
-            <h4>Staff Member</h4>
-            <p>staff@example.com</p>
+            <div class="item-title">{{ product.name }}</div>
+            <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
           </div>
-          <div class="avatar">SM</div>
-        </div>
-      </header>
-
-      <section class="content">
-        <h1>Staff Dashboard</h1>
-        <p class="subtitle">Quick overview of inventory status</p>
-
-        <div class="stats-grid">
-  <div class="panel stat-card">
-    <div>
-      <h3>Total Products</h3>
-      <strong>{{ total_products }}</strong>
-    </div>
-    <div class="stat-badge green-badge"></div>
-  </div>
-
-  <div class="panel stat-card">
-    <div>
-      <h3>Low Stock Items</h3>
-      <strong>{{ low_stock }}</strong>
-    </div>
-    <div class="stat-badge orange-badge"></div>
-  </div>
-
-  <div class="panel stat-card">
-    <div>
-      <h3>Expiring Soon</h3>
-      <strong>{{ expiring }}</strong>
-    </div>
-    <div class="stat-badge red-badge"></div>
-  </div>
-
-  <div class="panel stat-card">
-    <div>
-      <h3>Reorder Needed</h3>
-      <strong>{{ reorder_needed }}</strong>
-    </div>
-    <div class="stat-badge blue-badge"></div>
-  </div>
-</div>
-
-<div class="dashboard-grid">
-          <div class="panel list-panel">
-            <h2 class="panel-title">Recent Products</h2>
-            {% for product in recent_products %}
-              <div class="list-row">
-                <div>
-                  <div class="item-title">{{ product.name }}</div>
-                  <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
-                </div>
-                <div class="item-side">
-                  <div>Qty: {{ product.quantity }}</div>
-                  <div class="{{ 'danger-text' if product.stock_status == 'Low Stock' else 'ok-text' }}">
-                    {{ product.stock_status }}
-                  </div>
-                </div>
-              </div>
-            {% else %}
-              <div class="empty">No products yet.</div>
-            {% endfor %}
-          </div>
-
-          <div class="panel list-panel">
-            <h2 class="panel-title">Expiring Soon</h2>
-            {% for product in expiring_products %}
-              <div class="list-row">
-                <div>
-                  <div class="item-title">{{ product.name }}</div>
-                  <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
-                </div>
-                <div class="item-side">
-                  <div>{{ product.days_left }} days</div>
-                  <div>Qty: {{ product.quantity }}</div>
-                </div>
-              </div>
-            {% else %}
-              <div class="empty">No products expiring soon.</div>
-            {% endfor %}
+          <div class="item-side">
+            <div>Qty: {{ product.quantity }}</div>
+            <div class="{{ 'danger-text' if product.stock_status == 'Low Stock' else 'ok-text' }}">
+              {{ product.stock_status }}
+            </div>
           </div>
         </div>
-      </section>
-    </main>
+      {% else %}
+        <div class="empty">No products yet.</div>
+      {% endfor %}
+    </div>
+
+    <div class="panel list-panel">
+      <h2 class="panel-title">Expiring Soon</h2>
+      {% for product in expiring_products %}
+        <div class="list-row">
+          <div>
+            <div class="item-title">{{ product.name }}</div>
+            <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
+          </div>
+          <div class="item-side">
+            <div>{{ product.days_left }} days</div>
+            <div>Qty: {{ product.quantity }}</div>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty">No products expiring soon.</div>
+      {% endfor %}
+    </div>
   </div>
-</body>
-</html>
+{% endblock %}
