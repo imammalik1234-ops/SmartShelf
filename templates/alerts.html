@@ -1,130 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Expiry Alerts - Smart Shelf</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/smartshelf.css') }}">
-</head>
+{% extends "base.html" %}
+{% set active_page = "alerts" %}
 
-<body>
-  <div class="app-shell">
-    <aside class="sidebar">
+{% block title %}Alerts - Smart Shelf{% endblock %}
+
+{% block content %}
+  <h1>Alerts</h1>
+  <p class="subtitle">Monitor low stock and products nearing expiration</p>
+
+  <div class="stats-grid">
+    <div class="panel stat-card">
       <div>
-        <div class="brand">
-          <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
-          </div>
-          <div>
-            <h2>Smart Shelf</h2>
-            <p>Staff Portal</p>
-          </div>
-        </div>
-
-        <nav class="nav">
-          <a href="/dashboard"><span class="nav-icon">D</span> Dashboard</a>
-          <a href="/inventory-page"><span class="nav-icon">I</span> Inventory</a>
-          <a href="/add-product"><span class="nav-icon">+</span> Add Product</a>
-          <a href="/record-sale"><span class="nav-icon">S</span> Record Sale</a>
-          <a class="active" href="/expiry-alerts"><span class="nav-icon">!</span> Expiry Alerts</a>
-        </nav>
+        <h3>Expiring Soon</h3>
+        <strong id="expiringCount">0</strong>
       </div>
+      <div class="stat-badge orange-badge">!</div>
+    </div>
 
-      <a class="logout" href="#">Logout</a>
-    </aside>
+    <div class="panel stat-card">
+      <div>
+        <h3>Low Stock</h3>
+        <strong id="lowStockCount">0</strong>
+      </div>
+      <div class="stat-badge red-badge">L</div>
+    </div>
 
-    <main class="main">
-      <header class="topbar">
-        <div class="search">
-          <span></span>
-          <input type="search" placeholder="Search inventory...">
-        </div>
-        <div class="profile">
-          <div>
-            <h4>Staff Member</h4>
-            <p>staff@example.com</p>
-          </div>
-          <div class="avatar">SM</div>
-        </div>
-      </header>
-
-      <section class="content">
-        <h1>Expiry Alerts</h1>
-        <p class="subtitle">Monitor products nearing expiration</p>
-
-        <div class="stats-grid" style="grid-template-columns:repeat(2,minmax(180px,1fr));">
-          <div class="panel stat-card">
-            <div>
-              <h3>Expiring Soon</h3>
-              <strong id="expiringCount">0</strong>
-            </div>
-            <div class="stat-badge orange-badge">!</div>
-          </div>
-
-          <div class="panel stat-card">
-            <div>
-              <h3>Expired</h3>
-              <strong id="expiredCount">0</strong>
-            </div>
-            <div class="stat-badge red-badge">X</div>
-          </div>
-        </div>
-
-        <div class="panel list-panel">
-          <h2 class="panel-title">Products Expiring Soon</h2>
-          <div id="alertsList">
-            <div class="empty">Loading alerts...</div>
-          </div>
-        </div>
-      </section>
-    </main>
+    <div class="panel stat-card">
+      <div>
+        <h3>Expired</h3>
+        <strong id="expiredCount">0</strong>
+      </div>
+      <div class="stat-badge red-badge">X</div>
+    </div>
   </div>
 
-  <script>
-    const API_URL = "";
+  <h2 class="alerts-main-title">Active Alerts</h2>
 
-    function extractDaysLeft(message) {
-      const match = message.match(/Days left:\s*(-?\d+)/i);
-      return match ? Number(match[1]) : null;
+  <div class="panel list-panel">
+  
+    <h3 class="alert-section-title">Expiring Soon</h3>
+    <div id="expiringList"></div>
+
+    <h3 class="alert-section-title">Expired</h3>
+    <div id="expiredList"></div>
+
+    <h3 class="alert-section-title">Low Stock</h3>
+    <div id="lowStockList"></div>
+  </div>
+
+  <style>
+    .alerts-main-title{
+    font-size: 24px;
+    font-weight: 800;
+    color: #111827;
+    margin: 40px 0 20px 0;
+}
+
+    .alert-section-title{
+    font-size: 36px;
+    font-weight: 800;
+    color: #111827;
+    margin: 30px 0 15px 0;
+}
+    .section-empty {
+      color: #6b7280;
+      padding: 14px 0;
+      font-weight: 600;
     }
+  </style>
+{% endblock %}
 
-    async function loadAlerts() {
-      const response = await fetch(`${API_URL}/alerts`);
-      const alerts = await response.json();
+{% block scripts %}
+<script>
+  const API_URL = "";
 
-      const expiryAlerts = alerts.filter(alert => alert.alert_type === "EXPIRY");
-      const expired = expiryAlerts.filter(alert => extractDaysLeft(alert.message) < 0);
-      const expiringSoon = expiryAlerts.filter(alert => extractDaysLeft(alert.message) >= 0);
+  function extractDaysLeft(message) {
+    const match = message.match(/Days left:\s*(-?\d+)/i);
+    return match ? Number(match[1]) : null;
+  }
 
-      document.getElementById("expiringCount").textContent = expiringSoon.length;
-      document.getElementById("expiredCount").textContent = expired.length;
+  function createAlertRow(alert) {
+    const daysLeft = extractDaysLeft(alert.message);
 
-      const list = document.getElementById("alertsList");
-      list.innerHTML = "";
+    const row = document.createElement("div");
+    row.className = "list-row";
 
-      if (expiryAlerts.length === 0) {
-        list.innerHTML = `<div class="empty">No expiry alerts found.</div>`;
-        return;
-      }
+    row.innerHTML = `
+      <div>
+        <div class="item-title">${alert.product_name || "Product"}</div>
+        <div class="item-meta">${alert.message}</div>
+      </div>
 
-      expiryAlerts.forEach(alert => {
-        const daysLeft = extractDaysLeft(alert.message);
-        const row = document.createElement("div");
-        row.className = "list-row";
-        row.innerHTML = `
-          <div>
-            <div class="item-title">${alert.product_name || "Product"}</div>
-            <div class="item-meta">${alert.message}</div>
-          </div>
-          <div class="item-side ${daysLeft <= 2 ? "danger-text" : ""}">
-            ${daysLeft < 0 ? "Expired" : daysLeft + " days"}
-          </div>
-        `;
-        list.appendChild(row);
+      <div class="item-side ${alert.alert_type !== "EXPIRY" || daysLeft <= 2 ? "danger-text" : ""}">
+        ${
+          alert.alert_type === "LOW_STOCK"
+            ? "Low stock"
+            : alert.alert_type === "EXPIRED"
+            ? "Expired"
+            : daysLeft + " days"
+        }
+      </div>
+    `;
+
+    return row;
+  }
+
+  async function loadAlerts() {
+    const response = await fetch(`${API_URL}/alerts`);
+    const alerts = await response.json();
+
+    const activeAlerts = alerts.filter(alert => alert.status === "active");
+
+    const expiryAlerts = activeAlerts.filter(alert => alert.alert_type === "EXPIRY");
+    const expiringSoon = expiryAlerts.filter(alert => extractDaysLeft(alert.message) >= 0);
+
+    const lowStockAlerts = activeAlerts.filter(alert => alert.alert_type === "LOW_STOCK");
+    const expiredAlerts = activeAlerts.filter(alert => alert.alert_type === "EXPIRED");
+
+    document.getElementById("expiringCount").textContent = expiringSoon.length;
+    document.getElementById("lowStockCount").textContent = lowStockAlerts.length;
+    document.getElementById("expiredCount").textContent = expiredAlerts.length;
+
+    const expiringList = document.getElementById("expiringList");
+    const expiredList = document.getElementById("expiredList");
+    const lowStockList = document.getElementById("lowStockList");
+
+    expiringList.innerHTML = "";
+    expiredList.innerHTML = "";
+    lowStockList.innerHTML = "";
+
+    if (expiringSoon.length === 0) {
+      expiringList.innerHTML = `<div class="section-empty">No expiring products.</div>`;
+    } else {
+      expiringSoon.forEach(alert => {
+        expiringList.appendChild(createAlertRow(alert));
       });
     }
 
-    loadAlerts();
-  </script>
-</body>
-</html>
+    if (expiredAlerts.length === 0) {
+      expiredList.innerHTML = `<div class="section-empty">No expired products.</div>`;
+    } else {
+      expiredAlerts.forEach(alert => {
+        expiredList.appendChild(createAlertRow(alert));
+      });
+    }
+
+    if (lowStockAlerts.length === 0) {
+      lowStockList.innerHTML = `<div class="section-empty">No low stock products.</div>`;
+    } else {
+      lowStockAlerts.forEach(alert => {
+        lowStockList.appendChild(createAlertRow(alert));
+      });
+    }
+  }
+
+  loadAlerts();
+</script>
+{% endblock %}

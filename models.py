@@ -38,3 +38,12 @@ class Alert(db.Model):
     message = db.Column(db.String(255))
     status = db.Column(db.String(30), default="active")
     created_at = db.Column(db.DateTime)
+
+class Prediction(db.Model):
+    __tablename__ = "predictions"
+
+    prediction_id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.product_id"))
+    predicted_demand = db.Column(db.Integer)
+    recommended_reorder_qty = db.Column(db.Integer)
+    generated_on = db.Column(db.Date)

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% set active_page = "ai_predictions" %}
+
+{% block title %}AI Predictions - Smart Shelf{% endblock %}
+{% block search_placeholder %}Search predictions...{% endblock %}
+
+{% block content %}
+  <h1>AI Predictions</h1>
+  <p class="subtitle">Predicted demand and reorder recommendations</p>
+
+  <div class="panel table-panel">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Current Stock</th>
+          <th>Predicted Demand</th>
+          <th>Recommended Reorder</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in predictions %}
+          <tr>
+            <td>{{ item.product_name }}</td>
+            <td>{{ item.current_stock }}</td>
+            <td>{{ item.predicted_demand }}</td>
+            <td>{{ item.recommended_reorder_qty }}</td>
+            <td class="{{ 'danger-text' if item.status == 'Restock Soon' else 'ok-text' }}">{{ item.status }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="5" class="empty">No prediction data available.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
