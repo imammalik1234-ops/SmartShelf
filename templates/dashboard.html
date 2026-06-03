@@ -10,7 +10,7 @@
   <div class="stats-grid">
     <div class="panel stat-card">
       <div>
-        <h3>Total Products</h3>
+        <h3>Tracked Products</h3>
         <strong>{{ total_products }}</strong>
       </div>
       <div class="stat-badge green-badge">I</div>
@@ -18,7 +18,7 @@
 
     <div class="panel stat-card">
       <div>
-        <h3>Low Stock Items</h3>
+        <h3>Low Stock Alerts</h3>
         <strong>{{ low_stock }}</strong>
       </div>
       <div class="stat-badge orange-badge">L</div>
@@ -26,7 +26,7 @@
 
     <div class="panel stat-card">
       <div>
-        <h3>Expiring Soon</h3>
+        <h3>Expiry Risks</h3>
         <strong>{{ expiring }}</strong>
       </div>
       <div class="stat-badge red-badge">!</div>
@@ -34,13 +34,52 @@
 
     <div class="panel stat-card">
       <div>
-        <h3>Reorder Needed</h3>
+        <h3>Reorder Actions</h3>
         <strong>{{ reorder_needed }}</strong>
       </div>
       <div class="stat-badge blue-badge">R</div>
     </div>
   </div>
+  <div class="panel list-panel">
+    <h2 class="panel-title">Smart Recommendation</h2>
+    <div class="smart-recommendation-box">
+    <div class="ai-summary-row">
+        <div class="ai-summary-text">
+            <div class="item-title">Today's Suggestion</div>
+<div class="item-meta">AI-generated action for store performance</div>
+<div class="item-meta"><strong>Why this matters:</strong> helps prevent missed sales and stockout risk.</div>
+<div class="item-meta">{{ smart_recommendation }}</div>
+<div style="margin-top:12px;">
+    <a href="/ai-predictions" class="btn btn-primary">View Restocking Plan</a>
+</div>
+        </div>
+        <div class="ai-summary-badge">
+    <div class="item-meta" style="margin-bottom:6px; text-align:center;">Priority</div>
+    <div class="status-badge {{ recommendation_level }}">
+        {{ recommendation_level|title }}
+    </div>
+</div>
+    </div>
+</div>
+</div>
+</div>
+<div class="panel list-panel">
+    <h2 class="panel-title">Store Action Insights</h2>
 
+    {% for item in ai_summary %}
+    <div class="ai-summary-row">
+        <div class="ai-summary-text">
+            <div class="item-title">{{ item.title }}</div>
+            <div class="item-meta">{{ item.message }}</div>
+        </div>
+        <div class="ai-summary-badge">
+            <div class="status-badge {{ item.level }}">{{ item.level|title }}</div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty">No AI insights available yet.</div>
+    {% endfor %}
+</div>
   <div class="dashboard-grid">
     <div class="panel list-panel">
       <h2 class="panel-title">Recent Products</h2>

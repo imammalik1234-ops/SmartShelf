@@ -552,3 +552,132 @@ th {
     grid-template-columns: 1fr;
   }
 }
+
+.ai-summary-row {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  max-width: 720px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ai-summary-text {
+  flex: 1;
+}
+
+.ai-summary-badge {
+  flex-shrink: 0;
+}
+
+.ai-summary-text .item-title {
+  margin-bottom: 4px;
+}
+}
+
+.status-badge.urgent {
+  background: #fdeaea;
+  color: #b42318;
+}
+
+.status-badge.warning {
+  background: #fff4e5;
+  color: #b54708;
+}
+
+.status-badge.info {
+  background: #eaf4ff;
+  color: #175cd3;
+}
+.smart-recommendation-box {
+  background: linear-gradient(135deg, #f0f9ff, #ecfeff);
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-top: 12px;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.smart-recommendation-box .item-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+
+.smart-recommendation-box .item-meta {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #334155;
+}
+.panel.list-panel .ai-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.panel.list-panel .ai-summary-row:last-child {
+  border-bottom: none;
+}
+
+.panel.list-panel .ai-summary-text {
+  flex: 1;
+}
+
+.panel.list-panel .ai-summary-badge {
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.panel.list-panel .ai-summary-badge .status-badge {
+  display: inline-block;
+}
+
+.panel.list-panel .ai-summary-text .item-title {
+  margin-bottom: 4px;
+}
+.panel.list-panel .ai-summary-badge .status-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 78px;
+  text-align: center;
+}
+.smart-recommendation-box {
+  background: linear-gradient(135deg, #f0f9ff, #ecfeff);
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-top: 12px;
+  box-sizing: border-box;
+}
+
+.smart-recommendation-box .ai-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border-bottom: none;
+}
+
+.smart-recommendation-box .ai-summary-text {
+  flex: 1;
+}
+
+.smart-recommendation-box .ai-summary-badge {
+  flex-shrink: 0;
+  margin-left: 12px;
+}
