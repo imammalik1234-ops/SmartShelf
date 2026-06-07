@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Smart Shelf</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/smartshelf.css') }}">
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-panel">
+      <div class="auth-brand">
+        <div class="auth-logo">
+          <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Smart Shelf Logo">
+        </div>
+        <div>
+          <h1>Smart Shelf</h1>
+          <p>Staff portal sign in</p>
+        </div>
+      </div>
+
+      {% if error %}
+      <div class="validation-summary error">{{ error }}</div>
+      {% endif %}
+
+      <form action="{{ url_for('login') }}" method="post" class="auth-form">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password">
+
+        <button type="submit" class="btn btn-primary full-width-action">Sign in</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

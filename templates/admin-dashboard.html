@@ -1,0 +1,83 @@
+{% extends "admin-base.html" %}
+{% set active_page = "dashboard" %}
+
+{% block title %}Admin Dashboard - Smart Shelf{% endblock %}
+
+{% block content %}
+  <h1>Admin Dashboard</h1>
+  <p class="subtitle">Overview of inventory, alerts, and demand predictions</p>
+
+  <div class="stats-grid">
+    <div class="panel stat-card">
+      <div>
+        <h3>Total Products</h3>
+        <strong>{{ total_products }}</strong>
+      </div>
+      <div class="stat-badge green-badge">I</div>
+    </div>
+
+    <div class="panel stat-card">
+      <div>
+        <h3>Low Stock Items</h3>
+        <strong>{{ low_stock }}</strong>
+      </div>
+      <div class="stat-badge orange-badge">L</div>
+    </div>
+
+    <div class="panel stat-card">
+      <div>
+        <h3>Expiring Soon</h3>
+        <strong>{{ expiring }}</strong>
+      </div>
+      <div class="stat-badge red-badge">!</div>
+    </div>
+
+    <div class="panel stat-card">
+      <div>
+        <h3>Expired Products</h3>
+        <strong>{{ expired }}</strong>
+      </div>
+      <div class="stat-badge blue-badge">E</div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="panel list-panel">
+      <h2 class="panel-title">Recent Products</h2>
+      {% for product in recent_products %}
+        <div class="list-row">
+          <div>
+            <div class="item-title">{{ product.name }}</div>
+            <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
+          </div>
+          <div class="item-side">
+            <div>Qty: {{ product.quantity }}</div>
+            <div class="{{ 'danger-text' if product.stock_status == 'Low Stock' else 'ok-text' }}">
+              {{ product.stock_status }}
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty">No products yet.</div>
+      {% endfor %}
+    </div>
+
+    <div class="panel list-panel">
+      <h2 class="panel-title">Expiring Soon</h2>
+      {% for product in expiring_products %}
+        <div class="list-row">
+          <div>
+            <div class="item-title">{{ product.name }}</div>
+            <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
+          </div>
+          <div class="item-side">
+            <div>{{ product.days_left }} days</div>
+            <div>Qty: {{ product.quantity }}</div>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty">No expiring products.</div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}
