@@ -1,18 +1,27 @@
 from datetime import date, datetime, timedelta
 import os
+from functools import wraps
 
 from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, request
+from flask import Flask, redirect, render_template, request, url_for
 from flask_cors import CORS
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
 
 from database import db
-from models import Alert, Inventory, Product, Sale
+from models import Alert, Inventory, Product, Sale, User
 
 
 load_dotenv(override=True)
 
 app = Flask(__name__)
 CORS(app)
+app.secret_key = os.getenv("SECRET_KEY", "change-this-secret")
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -25,6 +34,44 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+login_manager.login_message = "Please log in to access this page."
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+def role_required(role):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not current_user.is_authenticated:
+                return login_manager.unauthorized()
+            if current_user.role != role:
+                return redirect(url_for("dashboard"))
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+@app.context_processor
+def inject_user_profile():
+    if current_user.is_authenticated:
+        name = current_user.name or "Staff Member"
+        initials = "".join([part[0].upper() for part in name.split() if part])[:2] or "SM"
+        return {
+            "profile_name": name,
+            "profile_email": current_user.email,
+            "profile_initials": initials,
+        }
+    return {}
 
 
 PRODUCT_CATALOG = {
@@ -446,10 +493,44 @@ def product_inventory_rows():
     return rows
 
 
+@app.route("/login", methods=["GET", "POST"])
+
+    if current_user.is_authenticated:
+        return redirect(url_for("admin_dashboard") if current_user.role == "admin" else url_for("dashboard"))
+
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        user = User.query.filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            login_user(user)
+            next_page = request.args.get("next")
+            if not next_page or not next_page.startswith("/"):
+                next_page = url_for("admin_dashboard") if user.role == "admin" else url_for("dashboard")
+            return redirect(next_page)
+
+        error = "Invalid email or password."
+
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("login"))
+
+
 @app.route("/")
 @app.route("/dashboard")
+@login_required
 def dashboard():
     check_alerts()
+
+    if current_user.role == "admin":
+        return redirect(url_for("admin_dashboard"))
 
     products = product_inventory_rows()
     total_products = len(products)
@@ -494,12 +575,15 @@ def dashboard():
                     "days_left": days_left,
                 })
 
+    reorder_needed = low_stock
+
     return render_template(
         "dashboard.html",
         total_products=total_products,
         low_stock=low_stock,
         expiring=expiring,
         expired=expired,
+        reorder_needed=reorder_needed,
         recent_products=recent_products[:5],
         expiring_products=expiring_products[:5],
         expired_products=expired_products[:5],
@@ -507,6 +591,7 @@ def dashboard():
 
 
 @app.route("/products", methods=["GET"])
+@login_required
 def get_products():
     result = []
 
@@ -525,6 +610,7 @@ def get_products():
 
 
 @app.route("/products", methods=["POST"])
+@login_required
 def add_product_api():
     data = request.get_json() or {}
     errors, cleaned = validate_product_form(
@@ -561,6 +647,7 @@ def add_product_api():
 
 
 @app.route("/products/<int:product_id>", methods=["PUT"])
+@login_required
 def update_product_api(product_id):
     product = Product.query.get(product_id)
     if product is None:
@@ -595,6 +682,7 @@ def update_product_api(product_id):
 
 
 @app.route("/products/<int:product_id>", methods=["DELETE"])
+@login_required
 def delete_product_api(product_id):
     product = Product.query.get(product_id)
     if product is None:
@@ -605,6 +693,7 @@ def delete_product_api(product_id):
 
 
 @app.route("/inventory", methods=["GET"])
+@login_required
 def get_inventory():
     result = []
 
@@ -622,12 +711,14 @@ def get_inventory():
 
 
 @app.route("/inventory-page")
+@login_required
 def inventory_page():
     check_alerts()
     return render_template("inventory.html", products=product_inventory_rows())
 
 
 @app.route("/add-product", methods=["GET", "POST"])
+@login_required
 def add_product():
     if request.method == "POST":
         form_data = form_data_from_request()
@@ -668,6 +759,7 @@ def add_product():
 
 
 @app.route("/edit-product/<int:product_id>", methods=["GET", "POST"])
+@login_required
 def edit_product(product_id):
     product = Product.query.get(product_id)
     if product is None:
@@ -720,12 +812,14 @@ def edit_product(product_id):
 
 
 @app.route("/delete-product/<int:product_id>", methods=["POST"])
+@login_required
 def delete_product(product_id):
     delete_product_records(product_id)
     return redirect("/inventory-page")
 
 
 @app.route("/remove-stock/<int:product_id>", methods=["POST"])
+@login_required
 def remove_stock(product_id):
     product = Product.query.get(product_id)
     inventory = inventory_for_product(product_id)
@@ -745,6 +839,8 @@ def remove_stock(product_id):
 
 
 @app.route("/sales", methods=["POST"])
+@login_required
+@role_required("admin")
 def record_sale():
     data = request.get_json()
     product_id = int(data["product_id"])
@@ -785,17 +881,21 @@ def record_sale():
 
 
 @app.route("/record-sale")
+@login_required
+@role_required("admin")
 def record_sale_page():
     return render_template("record-sale.html")
 
 
 @app.route("/check-alerts", methods=["GET"])
+@login_required
 def run_alert_check():
     check_alerts()
     return {"message": "Alerts checked successfully"}
 
 
 @app.route("/alerts", methods=["GET"])
+@login_required
 def get_alerts():
     check_alerts()
     result = []
@@ -815,12 +915,15 @@ def get_alerts():
 
 
 @app.route("/expiry-alerts")
+@login_required
 def expiry_alerts_page():
     check_alerts()
     return render_template("alerts.html")
 
 
 @app.route('/admin-alerts')
+@login_required
+@role_required("admin")
 def admin_alerts():
     check_alerts()
 
@@ -839,6 +942,7 @@ def admin_alerts():
 
 
 @app.route("/api/predictions", methods=["GET"])
+@login_required
 def api_predictions():
     products = Product.query.all()
     result = []
@@ -861,6 +965,8 @@ def api_predictions():
 
 
 @app.route("/ai-predictions")
+@login_required
+@role_required("admin")
 def ai_predictions_page():
     predictions = []
 
