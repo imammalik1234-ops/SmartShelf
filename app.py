@@ -7,7 +7,7 @@ from flask import render_template, request, redirect
 
 from database import db
 from models import Product, Inventory, Sale, Alert, Prediction
-from datetime import date
+from datetime import date, timedelta
 from datetime import date, datetime
 from models import Product, Inventory, Sale, Alert
 
@@ -116,6 +116,7 @@ def home():
     recent_products = []
     expiring_products = []
     ai_summary = []
+    urgent_actions = []
 
     for product in products:
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()
@@ -194,6 +195,17 @@ def home():
         recommendation_level = "stable"
         smart_recommendation = f"Demand is expected to be highest for {top_product} ({top_prediction}), so stock planning should prioritise this item."
 
+    if reorder_needed > 0:
+        urgent_actions.append(f"Restock {reorder_needed} product(s) as a priority.")
+
+    if expiring > 0:
+        urgent_actions.append(f"Review {expiring} product(s) nearing expiry.")
+
+    if low_stock > 0:
+        urgent_actions.append(f"Monitor {low_stock} low-stock item(s) closely.")
+
+    if top_product and top_prediction > 0:
+      urgent_actions.append(f"Prioritise {top_product} in stock planning due to expected demand.") 
     return render_template(
         'dashboard.html',
         total_products=total_products,
@@ -205,6 +217,7 @@ def home():
         ai_summary=ai_summary,
         smart_recommendation=smart_recommendation,
         recommendation_level=recommendation_level,
+        urgent_actions=urgent_actions[ :3],
     )
 @app.route('/products', methods=['GET'])
 def get_products():
@@ -224,6 +237,41 @@ def get_products():
 
     return result
 
+
+@app.route('/reports')
+def reports():
+    products = Product.query.all()
+    today = date.today()
+
+    low_stock_products = []
+    expiring_products = []
+    reorder_products = []
+
+    for product in products:
+            inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+            quantity = inventory.quantity if inventory else 0
+
+            if quantity <= product.reorder_level:
+                low_stock_products.append(product)
+
+            if product.expiry_date and product.expiry_date <= today + timedelta(days=7):
+                expiring_products.append(product)
+
+            predicted_demand = predict_demand_for_product(product.product_id)
+            reorder_qty = calculate_reorder_qty(predicted_demand, quantity)
+
+            if reorder_qty > 0:
+                reorder_products.append({
+                    "product": product,
+                    "reorder_qty": reorder_qty
+                })
+
+    return render_template(
+        'reports.html',
+        low_stock_products=low_stock_products,
+        expiring_products=expiring_products,
+        reorder_products=reorder_products
+    )
 @app.route('/products', methods=['POST'])
 def add_product_api():
     data = request.get_json()
@@ -563,6 +611,7 @@ def ai_predictions_page():
         })
 
     return render_template("ai-predictions.html", predictions=predictions)
+
 if __name__ == '__main__':
     app.run(debug=True)
     

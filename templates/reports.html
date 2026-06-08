@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% set active_page = "reports" %}
+
+{% block title %}Reports - Smart Shelf{% endblock %}
+
+{% block content %}
+<h1>Analytics & Reports</h1>
+<p class="subtitle">Overview of low stock, expiring items, and reorder planning.</p>
+
+<div class="stats-grid">
+    <div class="panel list-panel">
+        <h2 class="panel-title">Low Stock Items</h2>
+        {% if low_stock_products %}
+            {% for product in low_stock_products %}
+            <div class="list-row">
+                <div>
+                    <div class="item-title">{{ product.name }}</div>
+                    <div class="item-meta">{{ product.category }}</div>
+                </div>
+                <div class="status-badge warning">Low Stock</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">No low stock items.</div>
+        {% endif %}
+    </div>
+
+    <div class="panel list-panel">
+        <h2 class="panel-title">Expiring Products</h2>
+        {% if expiring_products %}
+            {% for product in expiring_products %}
+            <div class="list-row">
+                <div>
+                    <div class="item-title">{{ product.name }}</div>
+                    <div class="item-meta">Expiry: {{ product.expiry_date }}</div>
+                </div>
+                <div class="status-badge danger">Expiring</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">No products nearing expiry.</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel list-panel">
+    <h2 class="panel-title">Reorder Summary</h2>
+    {% if reorder_products %}
+        {% for item in reorder_products %}
+        <div class="list-row">
+            <div>
+                <div class="item-title">{{ item.product.name }}</div>
+                <div class="item-meta">{{ item.product.category }}</div>
+            </div>
+            <div class="status-badge info">Reorder {{ item.reorder_qty }}</div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">No reorder actions needed.</div>
+    {% endif %}
+</div>
+{% endblock %}

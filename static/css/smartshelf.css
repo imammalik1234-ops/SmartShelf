@@ -681,3 +681,40 @@ th {
   flex-shrink: 0;
   margin-left: 12px;
 }
+.panel.list-panel .list-row {
+  padding: 14px 0;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.panel.list-panel .list-row:last-child {
+  border-bottom: none;
+}
+.urgent-actions .list-row {
+  border-left: 4px solid #f59e0b;
+  padding-left: 14px;
+}
+.chart-panel {
+  margin-top: 20px;
+}
+
+.chart-panel canvas {
+  max-height: 320px;
+}
+.chart-panel {
+  margin-top: 20px;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 260px;
+  width: 100%;
+}
+.chart-panel {
+  min-height: 340px;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 260px;
+  width: 100%;
+}
