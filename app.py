@@ -19,6 +19,7 @@ from models import Alert, Inventory, Product, Sale, User
 
 load_dotenv(override=True)
 
+
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv("SECRET_KEY", "change-this-secret")
@@ -37,8 +38,7 @@ db.init_app(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"
-login_manager.login_message = "Please log in to access this page."
+login_manager.login_view = 'role_selection'
 
 
 @login_manager.user_loader
@@ -492,9 +492,38 @@ def product_inventory_rows():
 
     return rows
 
+@app.route("/")
+@app.route("/roles")
+def role_selection():
+    
+    if current_user.is_authenticated:
+        return redirect(url_for("admin_dashboard") if current_user.role == "admin" else url_for("dashboard"))
+    return render_template("role_selection.html")
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login/admin", methods=["GET", "POST"])
+def admin_login():
+    if current_user.is_authenticated:
+        return redirect(url_for("admin_dashboard") if current_user.role == "admin" else url_for("dashboard"))
 
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "") 
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and user.check_password(password) and user.role == "admin":
+            login_user(user)
+            next_page = request.args.get("next")
+            return redirect(next_page if next_page and next_page.startswith("/") else url_for("admin_dashboard"))
+        
+        error = "Invalid admin credentials."
+
+    return render_template("admin_login.html", error=error)
+
+
+@app.route("/login/staff", methods=["GET", "POST"])
+def staff_login():
     if current_user.is_authenticated:
         return redirect(url_for("admin_dashboard") if current_user.role == "admin" else url_for("dashboard"))
 
@@ -502,28 +531,26 @@ def product_inventory_rows():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        
         user = User.query.filter_by(email=email).first()
 
-        if user and user.check_password(password):
+        if user and user.check_password(password) and user.role == "staff":
             login_user(user)
             next_page = request.args.get("next")
-            if not next_page or not next_page.startswith("/"):
-                next_page = url_for("admin_dashboard") if user.role == "admin" else url_for("dashboard")
-            return redirect(next_page)
+            return redirect(next_page if next_page and next_page.startswith("/") else url_for("dashboard"))
+        
+        error = "Invalid staff credentials."
 
-        error = "Invalid email or password."
-
-    return render_template("login.html", error=error)
+    return render_template("staff_login.html", error=error)
 
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("login"))
+    return redirect(url_for("role_selection"))
 
 
-@app.route("/")
 @app.route("/dashboard")
 @login_required
 def dashboard():
