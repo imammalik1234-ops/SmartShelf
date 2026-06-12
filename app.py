@@ -551,6 +551,74 @@ def logout():
     return redirect(url_for("role_selection"))
 
 
+@app.route("/admin-dashboard")
+@login_required
+@role_required("admin")
+def admin_dashboard():
+    check_alerts()
+
+    products = product_inventory_rows()
+    total_products = len(products)
+    low_stock = 0
+    expiring = 0
+    expired = 0
+    today = date.today()
+
+    recent_products = []
+    expiring_products = []
+    expired_products = []
+
+    for product in products:
+        quantity = product["quantity"]
+        status = product["stock_status"]
+
+        recent_products.append({
+            "name": product["name"],
+            "category": product["category"],
+            "quantity": quantity,
+            "stock_status": status,
+        })
+
+        if status == "Low Stock":
+            low_stock += 1
+
+        if product["expiry_date"]:
+            days_left = (product["expiry_date"] - today).days
+
+            if days_left < 0:
+                expired += 1
+                expired_products.append({
+                    "name": product["name"],
+                    "category": product["category"],
+                    "quantity": quantity,
+                    "days_expired": abs(days_left),
+                })
+
+            elif days_left <= 7:
+                expiring += 1
+                expiring_products.append({
+                    "name": product["name"],
+                    "category": product["category"],
+                    "quantity": quantity,
+                    "days_left": days_left,
+                })
+
+    reorder_needed = low_stock
+
+    return render_template(
+        "admin-dashboard.html",
+        total_products=total_products,
+        low_stock=low_stock,
+        expiring=expiring,
+        expired=expired,
+        reorder_needed=reorder_needed,
+        recent_products=recent_products[:5],
+        expiring_products=expiring_products[:5],
+        expired_products=expired_products[:5],
+        active_page="dashboard",
+    )
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -718,7 +786,6 @@ def delete_product_api(product_id):
     delete_product_records(product_id)
     return {"message": "Product deleted successfully"}
 
-
 @app.route("/inventory", methods=["GET"])
 @login_required
 def get_inventory():
@@ -867,7 +934,6 @@ def remove_stock(product_id):
 
 @app.route("/sales", methods=["POST"])
 @login_required
-@role_required("admin")
 def record_sale():
     data = request.get_json()
     product_id = int(data["product_id"])
@@ -909,7 +975,6 @@ def record_sale():
 
 @app.route("/record-sale")
 @login_required
-@role_required("admin")
 def record_sale_page():
     return render_template("record-sale.html")
 
@@ -947,7 +1012,45 @@ def expiry_alerts_page():
     check_alerts()
     return render_template("alerts.html")
 
+@app.route("/admin-inventory")
+@login_required
+@role_required("admin")
+def admin_inventory():
 
+    products = []
+
+    for item in product_inventory_rows():
+        products.append({
+            "product_id": item["product_id"],
+            "product_name": item["name"],
+            "category": item["category"],
+            "quantity": item["quantity"],
+            "expiry_date": str(item["expiry_date"]) if item["expiry_date"] else "",
+            "stock_status": item["stock_status"],
+            "supplier": item.get("supplier", "")
+        })
+
+    return render_template(
+        "admin-inventory.html",
+        active_page="inventory",
+        products=products
+    )
+
+@app.route("/admin-edit-product/<int:product_id>")
+@login_required
+@role_required("admin")
+def admin_edit_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    inventory = Inventory.query.filter_by(product_id=product_id).first()
+    print("INVENTORY:", inventory)
+
+
+    return render_template(
+    "admin-edit-product.html",
+    product=product,
+    inventory=inventory,
+    active_page="inventory"
+)
 @app.route('/admin-alerts')
 @login_required
 @role_required("admin")
@@ -993,7 +1096,6 @@ def api_predictions():
 
 @app.route("/ai-predictions")
 @login_required
-@role_required("admin")
 def ai_predictions_page():
     predictions = []
 
@@ -1011,7 +1113,7 @@ def ai_predictions_page():
             "status": "Restock Soon" if reorder_qty > 0 else "Sufficient",
         })
 
-    return render_template("ai-predictions.html", predictions=predictions)
+    return render_template("ai_predictions.html", predictions=predictions)
 
 
 if __name__ == "__main__":

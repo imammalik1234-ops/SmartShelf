@@ -71,7 +71,7 @@ INSERT INTO users (name, email, password_hash, role)
 VALUES (
     'Admin User',
     'admin@smartshelf.com',
-    'scrypt:32768:8:1$LDFvokFU5PMqaZsM$fda9590a25719589ff260b67a2ae684b271726bcb9bc69503503e5bb0e7b4daa0fe86e78ad17d638f76304372c4849f0694f08d09a813fff3d11bf76a8a8ba0e048',
+    'scrypt:32768:8:1$RDOy9BIJXCKwCpSN$d006f074198de07c3804ad521815e9756595a8c6be873f520e18edbb711bfe8aac57a3a1b9b8974ab08811923299dd2db926ab5c347cddf0449f9174f0acd0bf',
     'admin'
 );
 
@@ -80,6 +80,6 @@ INSERT INTO users (name, email, password_hash, role)
 VALUES (
     'Staff User',
     'staff@smartshelf.com',
-    'scrypt:32768:8:1$XDsXhsxZczPxmV3y$b5b5903b3f9be915ab90da392f3c8186c3d82f577c548f0ad9b432f583421cad054285f246c31ba8ccf0a21f5a6276c2b60bcebba56fc6aff459149e9d013bbe',
+    'scrypt:32768:8:1$gM89VguGrqVYVJ6f$5ded188a22c1cd670cdc35ca6460e59c7b3ceae3f88ca3fed24fe2c50b5e56f90d6603673b5c9929b9f3721631611f1c34dda9fee64067e55735ee23372b7e6d',
     'staff'
 );
