@@ -978,6 +978,11 @@ def record_sale():
 def record_sale_page():
     return render_template("record-sale.html")
 
+@app.route('/admin-record-sale')
+@login_required
+def admin_record_sale_page():
+    return render_template('admin-record-sale.html')
+
 
 @app.route("/check-alerts", methods=["GET"])
 @login_required

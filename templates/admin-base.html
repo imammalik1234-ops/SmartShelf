@@ -10,9 +10,14 @@
     color: #4f63f6 !important;
   }
 
-  .nav-item.active {
+  .nav a.active {
     background: #eef2ff !important;
     color: #4f63f6 !important;
+  }
+
+  .nav a.active .nav-icon {
+    color: #4f63f6 !important;
+    border-color: #4f63f6 !important;
   }
 
   .avatar {
@@ -60,6 +65,11 @@
         <span class="nav-icon">!</span>
         Alerts
     </a>
+
+    <a class="{{ 'active' if active_page == 'record_sale' else '' }}" href="/admin-record-sale">
+    <span class="nav-icon">S</span> Record Sale
+</a>
+
 </nav>
 </div>
       <a class="logout" href="/logout">Logout</a>

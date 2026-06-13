@@ -1,0 +1,143 @@
+{% extends "admin-base.html" %}
+{% set active_page = "record_sale" %}
+
+{% block title %}Record Sale - Smart Shelf{% endblock %}
+
+{% block content %}
+
+<style>
+/* Admin theme only */
+
+.stock-display {
+    background: #eef2ff !important;
+    color: #4f63f6 !important;
+    border: 1px solid #c7d2fe !important;
+}
+
+.submit-btn,
+.btn-primary,
+.record-sale-btn {
+    background: #4f63f6 !important;
+    border-color: #4f63f6 !important;
+    color: white !important;
+}
+
+.submit-btn:hover,
+.btn-primary:hover,
+.record-sale-btn:hover {
+    background: #3f51e5 !important;
+    border-color: #3f51e5 !important;
+}
+
+
+.stock-box {
+    background: #eef2ff !important;
+    border: 1px solid #c7d2fe !important;
+    color: #4f63f6 !important;
+    font-weight: 700;
+}
+
+</style>
+
+  <a class="back-link" href="/inventory-page">&lt; Back to Inventory</a>
+  <h1>Record Sale</h1>
+  <p class="subtitle">Enter sale details to update inventory and track sales</p>
+
+  <div class="panel form-panel">
+    <label for="productSelect">Product *</label>
+    <select id="productSelect">
+      <option value="">Select a product</option>
+    </select>
+
+    <div class="stock-box" id="currentStock">Current Stock: --</div>
+
+    <label for="quantitySold">Quantity Sold *</label>
+    <input type="number" id="quantitySold" placeholder="0" min="1">
+
+    <label for="saleDate">Sale Date *</label>
+    <input type="date" id="saleDate">
+
+    <button class="btn btn-primary full-width-action" type="button" onclick="recordSale()">Record Sale</button>
+    <p id="message" class="message"></p>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const API_URL = "";
+    let inventoryData = [];
+
+    document.getElementById("saleDate").valueAsDate = new Date();
+
+    async function loadProductsAndInventory() {
+      const productResponse = await fetch(`${API_URL}/products`);
+      const products = await productResponse.json();
+
+      const inventoryResponse = await fetch(`${API_URL}/inventory`);
+      inventoryData = await inventoryResponse.json();
+
+      const select = document.getElementById("productSelect");
+      select.innerHTML = `<option value="">Select a product</option>`;
+
+      products.forEach(product => {
+        const option = document.createElement("option");
+        option.value = product.product_id;
+        option.textContent = product.name;
+        select.appendChild(option);
+      });
+    }
+
+    document.getElementById("productSelect").addEventListener("change", function () {
+      const selectedProductId = Number(this.value);
+      const item = inventoryData.find(i => i.product_id === selectedProductId);
+
+      document.getElementById("currentStock").textContent = item
+        ? `Current Stock: ${item.quantity}`
+        : "Current Stock: --";
+    });
+
+    async function recordSale() {
+      const productId = Number(document.getElementById("productSelect").value);
+      const quantity = Number(document.getElementById("quantitySold").value);
+      const message = document.getElementById("message");
+
+      message.style.display = "block";
+      message.className = "message";
+
+      if (!productId || quantity <= 0) {
+        message.textContent = "Please select a product and enter a valid quantity.";
+        message.classList.add("error");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/sales`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          product_id: productId,
+          quantity: quantity
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        message.textContent = `Sale recorded successfully. Remaining stock: ${result.remaining_stock}`;
+        message.classList.add("success");
+        document.getElementById("quantitySold").value = "";
+        await loadProductsAndInventory();
+
+        const item = inventoryData.find(i => i.product_id === productId);
+        document.getElementById("currentStock").textContent =
+          `Current Stock: ${item ? item.quantity : "--"}`;
+      } else {
+        message.textContent = result.error || "Something went wrong.";
+        message.classList.add("error");
+      }
+    }
+
+    loadProductsAndInventory();
+  </script>
+{% endblock %}
