@@ -1,0 +1,263 @@
+{% extends "admin-base.html" %}
+
+{% block title %}Inventory Management{% endblock %}
+
+{% block content %}
+
+<div class="inventory-page">
+
+    <div class="inventory-header">
+        <div>
+            <h1>Inventory Management</h1>
+            <p>Manage your product inventory and stock levels</p>
+        </div>
+
+        <a href="/add-product" class="add-product-btn">
+            + Add Product
+        </a>
+    </div>
+
+    <div class="inventory-toolbar">
+        <input
+            type="text"
+            id="inventorySearch"
+            placeholder="Search products..."
+            class="search-input"
+        >
+
+        <select class="filter-select">
+            <option value="all">All</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Expiring Soon">Expiring Soon</option>
+            <option value="Expired">Expired</option>
+            <option value="In Stock">In Stock</option>
+        </select>
+    </div>
+
+    <div class="inventory-table-container">
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Stock Quantity</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>Supplier</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.product_name }}</td>
+
+                    <td>{{ product.category }}</td>
+
+                    <td>{{ product.quantity }} units</td>
+
+                    <td>{{ product.expiry_date }}</td>
+
+                    <td>
+                        <span class="
+                            status-badge
+                            {% if product.stock_status == 'Low Stock' %}
+                                low-stock
+                            {% elif product.stock_status == 'Expiring Soon' %}
+                                expiring
+                            {% elif product.stock_status == 'Expired' %}
+                                expired
+                            {% else %}
+                                in-stock
+                            {% endif %}
+                        ">
+                            {{ product.stock_status }}
+                        </span>
+                    </td>
+
+                    <td>{{ product.supplier }}</td>
+
+                    <td class="actions">
+                       <a href="/admin-edit-product/{{ product.product_id }}" class="action-btn edit-btn">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="20"
+         height="20"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="2"
+         stroke-linecap="round"
+         stroke-linejoin="round">
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+    </svg>
+</a>
+                        
+
+                        <a href="/delete-product/{{ product.product_id }}"
+                           onclick="return confirm('Delete this product?')">
+                            🗑️
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if not products %}
+        <div class="empty-state">
+            No products found.
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<style>
+
+.inventory-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.inventory-header h1{
+    margin:0;
+    font-size:2rem;
+}
+
+.inventory-header p{
+    color:#6b7280;
+    margin-top:8px;
+}
+
+.add-product-btn{
+    background:#2563eb;
+    color:white;
+    padding:12px 20px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.inventory-toolbar{
+    display:flex;
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.search-input{
+    flex:1;
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+}
+
+.filter-select{
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    min-width:140px;
+}
+
+.inventory-table-container{
+    background:white;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+.inventory-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.inventory-table th{
+    background:#f9fafb;
+    text-align:left;
+    padding:18px;
+    font-weight:600;
+}
+
+.inventory-table td{
+    padding:18px;
+    border-top:1px solid #f0f0f0;
+}
+
+.status-badge{
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:0.85rem;
+}
+
+.low-stock{
+    background:#fff7ed;
+    color:#ea580c;
+}
+
+.expiring{
+    background:#fefce8;
+    color:#ca8a04;
+}
+
+.expired{
+    background:#fef2f2;
+    color:#dc2626;
+}
+
+.in-stock{
+    background:#ecfdf5;
+    color:#16a34a;
+}
+
+.actions a{
+    margin-right:10px;
+    text-decoration:none;
+    font-size:18px;
+}
+.actions {
+    display: flex;
+    gap: 16px;
+}
+
+.action-btn {
+    color: #374151;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.edit-btn:hover {
+    color: #2563eb;
+}
+
+.empty-state{
+    padding:40px;
+    text-align:center;
+    color:#6b7280;
+}
+
+</style>
+
+{% endblock %}
+<h1 style="color:red;">TEST INVENTORY PAGE</h1>
+
+<div style="background:white; padding:20px; margin-top:20px;">
+    <p>THIS SHOULD APPEAR.</p>
+
+    <table border="1" style="width:100%;">
+        <tr>
+            <th>Name</th>
+            <th>Category</th>
+        </tr>
+
+        <tr>
+            <td>Milk</td>
+            <td>Dairy</td>
+        </tr>
+    </table>
+</div>
