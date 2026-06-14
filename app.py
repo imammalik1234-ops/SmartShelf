@@ -228,12 +228,38 @@ def home():
     expiring_products = []
     reorder_needed = 0
     ai_summary = []
-    smart_recommendation = "Keep monitoring inventory levels."
-    recommendation_level = "high"
     urgent_actions = []
 
+    today = date.today()
+
+    for product in Product.query.all():
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
+
+        if quantity <= product.reorder_level:
+            low_stock += 1
+            reorder_needed += 1
+            urgent_actions.append(
+                f"{product.name} is low in stock"
+            )
+
+        if product.expiry_date:
+            if product.expiry_date < today:
+                expired += 1
+            elif product.expiry_date <= today + timedelta(days=7):
+                expiring += 1
+                expiring_products.append(product)
+
+        recent_products.append(product)
+
+    recent_products = recent_products[-5:]
+    expiring_products = expiring_products[:5]
+
+    smart_recommendation = "Keep monitoring inventory levels."
+    recommendation_level = "High" if low_stock or expiring else "Normal"
+
     return render_template(
-        'dashboard.html',
+        "dashboard.html",
         total_products=total_products,
         low_stock=low_stock,
         expiring=expiring,
@@ -244,7 +270,7 @@ def home():
         ai_summary=ai_summary,
         smart_recommendation=smart_recommendation,
         recommendation_level=recommendation_level,
-        urgent_actions=urgent_actions,
+        urgent_actions=urgent_actions[:3]
     )
 @app.route("/roles")
 def role_selection():
