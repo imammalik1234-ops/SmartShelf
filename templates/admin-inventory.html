@@ -59,7 +59,11 @@
 
                     <td>{{ product.expiry_date }}</td>
 
-                    <td>
+                    <td> {{ product.stock_status }}</td>
+
+                    <td>{{ product.supplier }}</td>
+
+                    
                         <span class="
                             status-badge
                             {% if product.stock_status == 'Low Stock' %}

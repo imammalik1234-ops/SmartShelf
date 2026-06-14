@@ -407,128 +407,6 @@ def admin_dashboard():
         expired_products=expired_products[:5],
         active_page="dashboard"
     )
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    check_alerts()
-
-    if current_user.role == "admin":
-        return redirect(url_for("admin_dashboard"))
-
-    products = product_inventory_rows()
-    total_products = len(products)
-    low_stock = 0
-    expiring = 0
-    today = date.today()
-    recent_products = []
-    expiring_products = []
-    ai_summary = []
-    urgent_actions = []
-
-    for product in products:
-        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
-        quantity = inventory.quantity if inventory else 0
-        stock_status = "Low Stock" if quantity <= product.reorder_level else "In Stock"
-
-        predicted_demand = predict_demand_for_product(product.product_id)
-        reorder_qty = calculate_reorder_qty(predicted_demand, quantity)
-
-        if reorder_qty > 0:
-            reorder_needed += 1
-
-        recent_products.append({
-            "name": product.name,
-            "category": product.category,
-            "quantity": quantity,
-            "stock_status": stock_status
-        })
-
-        if inventory and quantity <= product.reorder_level:
-            low_stock += 1
-
-        if product.expiry_date:
-            days_left = (product.expiry_date - today).days
-            if 0 <= days_left <= 7:
-                expiring += 1
-                expiring_products.append({
-                    "name": product.name,
-                    "category": product.category,
-                    "quantity": quantity,
-                    "days_left": days_left
-                })
-
-    top_product = None
-    top_prediction = 0
-
-    for product in products:
-        predicted = predict_demand_for_product(product.product_id)
-        if predicted > top_prediction:
-            top_prediction = predicted
-            top_product = product.name
-
-    if reorder_needed > 0:
-        ai_summary.append({
-        "level": "urgent",
-        "title": "Restocking Priority",
-        "message": f"Reorder attention needed for {reorder_needed} product(s)."
-    })
-
-    if expiring > 0:
-        ai_summary.append({
-        "level": "warning",
-        "title": "Expiry Attention",
-        "message": f"{expiring} product(s) are close to expiry and may need action."
-    })
-
-    if low_stock > 0:
-        ai_summary.append({
-        "level": "info",
-        "title": "Low Stock Watch",
-        "message": f"{low_stock} product(s) are currently running low."
-    })
-        recommendation_level = "stable"
-    smart_recommendation = "Inventory looks stable today."
-
-    if reorder_needed > 0:
-        recommendation_level = "high"
-        smart_recommendation = f"Restock priority detected. {reorder_needed} product(s) may affect sales if not replenished soon."
-    elif expiring > 0:
-        recommendation_level = "watch"
-        smart_recommendation = f"Expiry attention needed. {expiring} product(s) may lead to avoidable waste if not reviewed soon."
-    elif low_stock > 0:
-        recommendation_level = "watch"
-        smart_recommendation = f"Low stock risk detected. {low_stock} product(s) may reduce product availability if not monitored."
-    elif top_product and top_prediction > 0:
-        recommendation_level = "stable"
-        smart_recommendation = f"Demand is expected to be highest for {top_product} ({top_prediction}), so stock planning should prioritise this item."
-
-    if reorder_needed > 0:
-        urgent_actions.append(f"Restock {reorder_needed} product(s) as a priority.")
-
-    if expiring > 0:
-        urgent_actions.append(f"Review {expiring} product(s) nearing expiry.")
-
-    if low_stock > 0:
-        urgent_actions.append(f"Monitor {low_stock} low-stock item(s) closely.")
-
-    if top_product and top_prediction > 0:
-      urgent_actions.append(f"Prioritise {top_product} in stock planning due to expected demand.") 
-    reorder_needed = low_stock
-
-    return render_template(
-    'dashboard.html',
-    total_products=total_products,
-    low_stock=low_stock,
-    expiring=expiring,
-    expired=expired,
-    recent_products=recent_products[:5],
-    expiring_products=expiring_products[:5],
-    reorder_needed=reorder_needed,
-    ai_summary=ai_summary,
-    smart_recommendation=smart_recommendation,
-    recommendation_level=recommendation_level,
-    urgent_actions=urgent_actions[:3],
-)
 
 @app.route("/products", methods=["GET"])
 @login_required
@@ -955,23 +833,37 @@ def admin_inventory():
         active_page="inventory",
         products=products
     )
-
-@app.route("/admin-edit-product/<int:product_id>")
+@app.route("/admin-edit-product/<int:product_id>", methods=["GET", "POST"])
 @login_required
 @role_required("admin")
 def admin_edit_product(product_id):
     product = Product.query.get_or_404(product_id)
-    inventory = Inventory.query.filter_by(product_id=product_id).first()
-    print("INVENTORY:", inventory)
+    inventory = Inventory.query.filter_by(product_id=product.product_id).first()
 
+    if request.method == "POST":
+        product.name = request.form["name"]
+        product.category = request.form["category"]
+        product.supplier = request.form["supplier"]
+        product.unit_price = request.form["unit_price"]
+        product.expiry_date = parse_date(request.form["expiry_date"])
+        product.reorder_level = request.form["reorder_level"]
+
+        if inventory is None:
+            inventory = Inventory(product_id=product.product_id, quantity=0)
+            db.session.add(inventory)
+
+        inventory.quantity = request.form["quantity"]
+
+        db.session.commit()
+        return redirect("/admin-inventory")
 
     return render_template(
-    "admin-edit-product.html",
-    product=product,
-    inventory=inventory,
-    active_page="inventory"
-)
-@app.route('/admin-alerts')
+        "admin-edit-product.html",
+        product=product,
+        inventory=inventory,
+        active_page="inventory"
+    )
+@app.route("/admin-alerts")
 @login_required
 @role_required("admin")
 def admin_alerts():
@@ -996,11 +888,12 @@ def admin_alerts():
         alerts=alerts_data,
         active_page="alerts"
     )
-@app.route('/delete-product/<int:product_id>', methods=['POST'])
+@app.route("/delete-product/<int:product_id>", methods=["POST"])
 @login_required
+@role_required("admin")
 def delete_product_view(product_id):
     delete_product_records(product_id)
-    return redirect('/inventory-page')
+    return redirect("/admin-inventory")
 
 
 @app.route('/add-product', methods=['GET', 'POST'])
