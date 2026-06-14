@@ -1,3 +1,5 @@
+from unittest import result
+
 from flask import Flask, request, render_template, redirect, url_for, session
 from flask_cors import CORS
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
@@ -645,34 +647,60 @@ def get_inventory():
     return result
 
 @app.route('/inventory-page')
-
-@app.route("/inventory-page")
 @login_required
 def inventory_page():
-    inventory_items = Inventory.query.all()
     products = []
 
-    for item in inventory_items:
-        product = Product.query.get(item.product_id)
+    for product in Product.query.all():
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
 
-        if product:
-            products.append({
-                "product_id": product.product_id,
-                "name": product.name,
-                "category": product.category,
-                "supplier": product.supplier,
-                "unit_price": product.unit_price,
-                "expiry_date": product.expiry_date,
-                "quantity": item.quantity
-            })
+        products.append({
+            "product_id": product.product_id,
+            "name": product.name,
+            "category": product.category,
+            "supplier": product.supplier or "",
+            "unit_price": float(product.unit_price) if product.unit_price else 0,
+            "expiry_date": str(product.expiry_date) if product.expiry_date else "",
+            "quantity": quantity,
+            "stock_status": "Low Stock" if quantity <= product.reorder_level else "In Stock"
+        })
+
+    return render_template(
+        "inventory.html",
+        active_page="inventory",
+        products=products
+    )
 @app.route("/add-product", methods=["GET", "POST"])
 @login_required
 def add_product():
     if request.method == "POST":
-        form_data = form_data_from_request()
-        errors, cleaned = validate_product_form(form_data, require_future_expiry=True)
+        new_product = Product(
+            name=request.form["name"],
+            category=request.form["category"],
+            supplier=request.form["supplier"],
+            unit_price=request.form["unit_price"],
+            expiry_date=parse_date(request.form["expiry_date"]),
+            reorder_level=request.form["reorder_level"]
+        )
 
-    return render_template('inventory.html', products=products)
+        db.session.add(new_product)
+        db.session.commit()
+
+        inventory = Inventory(
+            product_id=new_product.product_id,
+            quantity=request.form["quantity"]
+        )
+
+        db.session.add(inventory)
+        db.session.commit()
+
+        return redirect("/inventory-page")
+
+    return render_template(
+        "add-product.html",
+        active_page="add_product"
+    )
 
 def delete_product_records(product_id):
     Inventory.query.filter_by(product_id=product_id).delete()
@@ -871,18 +899,20 @@ def expiry_alerts_page():
 @login_required
 @role_required("admin")
 def admin_inventory():
-
     products = []
 
-    for item in product_inventory_rows():
+    for product in Product.query.all():
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
+
         products.append({
-            "product_id": item["product_id"],
-            "product_name": item["name"],
-            "category": item["category"],
-            "quantity": item["quantity"],
-            "expiry_date": str(item["expiry_date"]) if item["expiry_date"] else "",
-            "stock_status": item["stock_status"],
-            "supplier": item.get("supplier", "")
+            "product_id": product.product_id,
+            "product_name": product.name,
+            "category": product.category,
+            "quantity": quantity,
+            "expiry_date": str(product.expiry_date) if product.expiry_date else "",
+            "stock_status": "Low Stock" if quantity <= product.reorder_level else "In Stock",
+            "supplier": product.supplier or ""
         })
 
     return render_template(
@@ -1002,15 +1032,6 @@ def get_predictions():
 
     for product in products:
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()
-
-
-@app.route("/ai-predictions")
-@login_required
-def ai_predictions_view():
-    predictions = []
-
-    for product in Product.query.all():
-        inventory = inventory_for_product(product.product_id)
         current_stock = inventory.quantity if inventory else 0
 
         predicted_demand = predict_demand_for_product(product.product_id)
@@ -1025,12 +1046,14 @@ def ai_predictions_view():
         })
 
     return result
+
+
 @app.route('/ai-predictions')
+@login_required
 def ai_predictions_page():
-    products = Product.query.all()
     predictions = []
 
-    for product in products:
+    for product in Product.query.all():
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()
         current_stock = inventory.quantity if inventory else 0
 
@@ -1042,6 +1065,7 @@ def ai_predictions_page():
             status = "Restock Soon"
 
         predictions.append({
+            "product_id": product.product_id,
             "product_name": product.name,
             "current_stock": current_stock,
             "predicted_demand": predicted_demand,
@@ -1049,7 +1073,11 @@ def ai_predictions_page():
             "status": status
         })
 
-    return render_template("ai_predictions.html", predictions=predictions)
+    return render_template(
+        "ai_predictions.html",
+        active_page="ai_predictions",
+        predictions=predictions
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
