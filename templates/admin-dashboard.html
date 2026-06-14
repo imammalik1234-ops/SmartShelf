@@ -4,11 +4,11 @@
 {% block title %}Admin Dashboard - Smart Shelf{% endblock %}
 
 {% block content %}
-  <div class="admin-dashboard-page">
+  <div class="admin-dashboard-page compact-dashboard">
     <div class="dashboard-header-row">
         <div>
             <h1 class="dashboard-title">Admin Dashboard</h1>
-            <p class="dashboard-subtitle">Overview of inventory, alerts and actions.</p>
+            <p class="dashboard-subtitle">Overview of inventory, alerts and stock status.</p>
         </div>
     </div>
 
@@ -39,8 +39,8 @@
         </div>
     </div>
 
-    <div class="admin-dashboard-grid">
-        <div class="admin-panel">
+    <div class="admin-dashboard-grid compact-grid">
+        <div class="admin-panel compact-panel">
             <div class="admin-panel-header">
                 <h2>Recent Products</h2>
             </div>
@@ -54,7 +54,7 @@
                                 <div class="admin-list-subtitle">{{ product.category }}</div>
                             </div>
                             <div class="admin-list-meta">
-                                <span class="admin-badge {% if product.stock_status == 'Low Stock' %}badge-danger{% else %}badge-success{% endif %}">
+                                <span class="admin-badge {% if product.stock_status == 'Low Stock' %}badge-warning{% else %}badge-success{% endif %}">
                                     {{ product.stock_status }}
                                 </span>
                                 <div class="admin-qty">Qty: {{ product.quantity }}</div>
@@ -67,7 +67,7 @@
             {% endif %}
         </div>
 
-        <div class="admin-panel">
+        <div class="admin-panel compact-panel">
             <div class="admin-panel-header">
                 <h2>Expiring Soon</h2>
             </div>
@@ -94,7 +94,7 @@
             {% endif %}
         </div>
 
-        <div class="admin-panel">
+        <div class="admin-panel compact-panel">
             <div class="admin-panel-header">
                 <h2>Expired Products</h2>
             </div>
@@ -121,7 +121,7 @@
             {% endif %}
         </div>
 
-        <div class="admin-panel">
+        <div class="admin-panel compact-panel">
             <div class="admin-panel-header">
                 <h2>Quick Summary</h2>
             </div>

@@ -51,62 +51,40 @@
             <tbody>
                 {% for product in products %}
                 <tr>
-                    <td>{{ product.product_name }}</td>
+    <td>{{ product.product_name }}</td>
+    <td>{{ product.category }}</td>
+    <td>{{ product.quantity }} units</td>
+    <td>{{ product.expiry_date }}</td>
+    <td>
+        <span class="
+            status-badge
+            {% if product.stock_status == 'Low Stock' %}
+                low
+            {% elif product.stock_status == 'Expiring Soon' %}
+                expiring
+            {% elif product.stock_status == 'Expired' %}
+                expired
+            {% else %}
+                in-stock
+            {% endif %}
+        ">
+            {{ product.stock_status }}
+        </span>
+    </td>
+    <td>{{ product.supplier }}</td>
+    <td>
+        <div class="inventory-actions">
+            <a href="/admin-edit-product/{{ product.product_id }}" class="btn btn-secondary">Edit</a>
 
-                    <td>{{ product.category }}</td>
-
-                    <td>{{ product.quantity }} units</td>
-
-                    <td>{{ product.expiry_date }}</td>
-
-                    <td> {{ product.stock_status }}</td>
-
-                    <td>{{ product.supplier }}</td>
+            <form method="POST" action="/delete-product/{{ product.product_id }}" style="display:inline;">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </td>
+</tr>
+{% endfor %}
 
                     
-                        <span class="
-                            status-badge
-                            {% if product.stock_status == 'Low Stock' %}
-                                low-stock
-                            {% elif product.stock_status == 'Expiring Soon' %}
-                                expiring
-                            {% elif product.stock_status == 'Expired' %}
-                                expired
-                            {% else %}
-                                in-stock
-                            {% endif %}
-                        ">
-                            {{ product.stock_status }}
-                        </span>
-                    </td>
-
-                    <td>{{ product.supplier }}</td>
-
-                    <td class="actions">
-                       <a href="/admin-edit-product/{{ product.product_id }}" class="action-btn edit-btn">
-    <svg xmlns="http://www.w3.org/2000/svg"
-         width="20"
-         height="20"
-         viewBox="0 0 24 24"
-         fill="none"
-         stroke="currentColor"
-         stroke-width="2"
-         stroke-linecap="round"
-         stroke-linejoin="round">
-        <path d="M12 20h9"/>
-        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
-    </svg>
-</a>
-                        
-
-                        <a href="/delete-product/{{ product.product_id }}"
-                           onclick="return confirm('Delete this product?')">
-                            🗑️
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
         </table>
 
         {% if not products %}

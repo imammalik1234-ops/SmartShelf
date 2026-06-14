@@ -148,33 +148,67 @@ def parse_date(value):
     return datetime.strptime(value, "%Y-%m-%d").date() if value else None
 
 def check_alerts():
-    products = Product.query.all()
+    today = date.today()
 
-    for product in products:
+    for product in Product.query.all():
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
 
-        if inventory and inventory.quantity <= product.reorder_level:
-            alert = Alert(
+        # LOW STOCK ALERT
+        if quantity <= product.reorder_level:
+            existing_low_stock = Alert.query.filter_by(
                 product_id=product.product_id,
                 alert_type="LOW_STOCK",
-                message=f"{product.name} is low in stock. Current quantity: {inventory.quantity}",
-                status="active",
-                created_at=datetime.now()
-            )
-            db.session.add(alert)
+                status="active"
+            ).first()
 
-        if product.expiry_date:
-            days_left = (product.expiry_date - date.today()).days
-
-            if days_left <= 3:
-                alert = Alert(
+            if existing_low_stock is None:
+                low_stock_alert = Alert(
                     product_id=product.product_id,
-                    alert_type="EXPIRY",
-                    message=f"{product.name} is expiring soon. Days left: {days_left}",
+                    alert_type="LOW_STOCK",
+                    message=f"{product.name} is low in stock. Current quantity: {quantity}",
                     status="active",
                     created_at=datetime.now()
                 )
-                db.session.add(alert)
+                db.session.add(low_stock_alert)
+
+        # EXPIRY ALERT
+        if product.expiry_date:
+            days_left = (product.expiry_date - today).days
+
+            if 0 <= days_left <= 7:
+                existing_expiry = Alert.query.filter_by(
+                    product_id=product.product_id,
+                    alert_type="EXPIRY",
+                    status="active"
+                ).first()
+
+                if existing_expiry is None:
+                    expiry_alert = Alert(
+                        product_id=product.product_id,
+                        alert_type="EXPIRY",
+                        message=f"{product.name} is expiring soon. Days left: {days_left}",
+                        status="active",
+                        created_at=datetime.now()
+                    )
+                    db.session.add(expiry_alert)
+
+            elif days_left < 0:
+                existing_expired = Alert.query.filter_by(
+                    product_id=product.product_id,
+                    alert_type="EXPIRED",
+                    status="active"
+                ).first()
+
+                if existing_expired is None:
+                    expired_alert = Alert(
+                        product_id=product.product_id,
+                        alert_type="EXPIRED",
+                        message=f"{product.name} has expired.",
+                        status="active",
+                        created_at=datetime.now()
+                    )
+                    db.session.add(expired_alert)
 
     db.session.commit()
 def predict_demand_for_product(product_id):
@@ -382,7 +416,6 @@ def admin_dashboard():
                     "quantity": quantity,
                     "days_expired": abs(days_left),
                 })
-
             elif days_left <= 7:
                 expiring += 1
                 expiring_products.append({
@@ -617,8 +650,8 @@ def add_product():
 
 def delete_product_records(product_id):
     Inventory.query.filter_by(product_id=product_id).delete()
-    Alert.query.filter_by(product_id=product_id).delete()
     Sale.query.filter_by(product_id=product_id).delete()
+    Alert.query.filter_by(product_id=product_id).delete()
     Product.query.filter_by(product_id=product_id).delete()
     db.session.commit()
 

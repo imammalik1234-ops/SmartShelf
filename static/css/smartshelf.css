@@ -994,3 +994,264 @@ th {
         align-items: flex-start;
     }
 }
+.admin-edit-form {
+    width: 100%;
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.admin-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.admin-form-group input,
+.admin-form-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #111827;
+}
+
+.admin-form-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.inventory-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.inventory-actions form {
+    margin: 0;
+}
+
+.inventory-actions .btn {
+    min-width: 90px;
+    text-align: center;
+}
+.admin-stats-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+    .admin-stats-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+.admin-stats-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+    .admin-stats-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+.admin-dashboard-grid {
+    align-items: start;
+}
+
+.admin-panel {
+    min-height: auto;
+}
+
+.admin-list-row {
+    align-items: center;
+}
+
+.admin-empty-state {
+    padding: 24px 0;
+}
+.admin-dashboard-grid {
+    align-items: start;
+}
+
+.admin-panel {
+    min-height: auto;
+}
+
+.admin-list-row {
+    align-items: center;
+}
+
+.admin-empty-state {
+    padding: 24px 0;
+}
+
+.admin-stats-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+    .admin-stats-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+.compact-dashboard {
+    padding: 20px 24px;
+}
+
+.compact-dashboard .dashboard-header-row {
+    margin-bottom: 18px;
+}
+
+.compact-dashboard .dashboard-title {
+    font-size: 30px;
+    margin-bottom: 4px;
+}
+
+.compact-dashboard .dashboard-subtitle {
+    font-size: 14px;
+    margin: 0;
+}
+
+.compact-dashboard .admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.compact-dashboard .admin-stat-card {
+    padding: 14px 16px;
+    min-height: 80px;
+    border-radius: 14px;
+}
+
+.compact-dashboard .admin-stat-label {
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.compact-dashboard .admin-stat-value {
+    font-size: 24px;
+    line-height: 1.1;
+}
+
+.compact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.compact-panel {
+    padding: 16px;
+    min-height: 140px;
+    height: auto;
+    border-radius: 16px;
+}
+
+.compact-panel .admin-panel-header {
+    margin-bottom: 12px;
+}
+
+.compact-panel .admin-panel-header h2 {
+    font-size: 20px;
+    margin: 0;
+}
+}
+
+.compact-panel .admin-list {
+    gap: 8px;
+}
+
+.compact-panel .admin-list-row {
+    padding: 8px 0;
+    align-items: center;
+}
+
+.compact-panel .admin-list-title {
+    font-size: 15px;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.compact-panel .admin-list-subtitle {
+    font-size: 13px;
+}
+
+.compact-panel .admin-list-meta {
+    gap: 6px;
+}
+
+.compact-panel .admin-qty {
+    font-size: 12px;
+}
+
+.compact-panel .admin-badge {
+    font-size: 11px;
+    padding: 5px 8px;
+}
+
+.compact-panel .admin-empty-state {
+    padding: 16px 0;
+    font-size: 13px;
+}
+
+.compact-panel .admin-summary-box {
+    gap: 10px;
+}
+
+.compact-panel .summary-item {
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+
+.compact-panel .summary-item span {
+    font-size: 14px;
+}
+
+.compact-panel .summary-item strong {
+    font-size: 15px;
+}
+
+@media (max-width: 1200px) {
+    .compact-dashboard .admin-stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .compact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .compact-dashboard .admin-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .compact-dashboard {
+        padding: 16px;
+    }
+
+    .compact-dashboard .admin-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
