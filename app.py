@@ -337,16 +337,14 @@ def admin_dashboard():
     check_alerts()
 
     products = []
-    total_products = 0
     low_stock = 0
     expiring = 0
     expired = 0
-    reorder_needed = 0
+    today = date.today()
+
     recent_products = []
     expiring_products = []
     expired_products = []
-
-    today = date.today()
 
     for product in Product.query.all():
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()
@@ -363,11 +361,15 @@ def admin_dashboard():
         }
 
         products.append(item)
-        recent_products.append(item)
+        recent_products.append({
+            "name": product.name,
+            "category": product.category,
+            "quantity": quantity,
+            "stock_status": status,
+        })
 
         if status == "Low Stock":
             low_stock += 1
-            reorder_needed += 1
 
         if product.expiry_date:
             days_left = (product.expiry_date - today).days
@@ -378,18 +380,20 @@ def admin_dashboard():
                     "name": product.name,
                     "category": product.category,
                     "quantity": quantity,
-                    "days_left": days_left
+                    "days_expired": abs(days_left),
                 })
+
             elif days_left <= 7:
                 expiring += 1
                 expiring_products.append({
                     "name": product.name,
                     "category": product.category,
                     "quantity": quantity,
-                    "days_left": days_left
+                    "days_left": days_left,
                 })
 
     total_products = len(products)
+    reorder_needed = low_stock
 
     return render_template(
         "admin-dashboard.html",
@@ -403,8 +407,6 @@ def admin_dashboard():
         expired_products=expired_products[:5],
         active_page="dashboard"
     )
-
-
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -975,32 +977,25 @@ def admin_edit_product(product_id):
 def admin_alerts():
     check_alerts()
 
-    inventory = Inventory.query.filter_by(product_id=product_id).first()
+    alerts_data = []
 
-    if request.method == 'POST':
-        product.name = request.form['name']
-        product.category = request.form['category']
-        product.supplier = request.form['supplier']
-        product.unit_price = request.form['unit_price']
-        product.expiry_date = parse_date(request.form['expiry_date'])
-        product.reorder_level = request.form['reorder_level']
+    for alert in Alert.query.order_by(Alert.created_at.desc()).all():
+        product = Product.query.get(alert.product_id)
 
-        if inventory is None:
-            inventory = Inventory(product_id=product_id)
-            db.session.add(inventory)
-
-        inventory.quantity = request.form['quantity']
-
-        db.session.commit()
-
-        return redirect('/inventory-page')
+        alerts_data.append({
+            "alert_id": alert.alert_id,
+            "product_name": product.name if product else "Unknown Product",
+            "category": product.category if product else "Unknown",
+            "message": alert.message,
+            "status": alert.status,
+            "created_at": alert.created_at
+        })
 
     return render_template(
-        'edit-product.html',
-        product=product,
-        quantity=inventory.quantity if inventory else 0
+        "admin-alerts.html",
+        alerts=alerts_data,
+        active_page="alerts"
     )
-
 @app.route('/delete-product/<int:product_id>', methods=['POST'])
 @login_required
 def delete_product_view(product_id):
