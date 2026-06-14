@@ -1255,3 +1255,48 @@ th {
         grid-template-columns: 1fr;
     }
 }
+.list-panel {
+    padding: 18px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.panel-title {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.subtitle {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.list-row {
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.list-row:last-child {
+    border-bottom: none;
+}
+
+.item-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.danger-text {
+    color: #b45309;
+}
+
+.empty {
+    color: #9ca3af;
+    font-size: 14px;
+    padding: 12px 0;
+}

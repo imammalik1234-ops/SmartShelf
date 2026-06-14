@@ -251,18 +251,27 @@ def create_expiry_alert(product):
 
                 db.session.add(alert)
 
-@app.route('/')
-@app.route('/dashboard')
+@app.route("/")
+@app.route("/dashboard")
+@login_required
 def home():
-    total_products = Product.query.count()
+    if current_user.role == "admin":
+        return redirect(url_for("admin_dashboard"))
+
+    total_products = 0
     low_stock = 0
     expiring = 0
     expired = 0
+    reorder_needed = 0
+
     recent_products = []
     expiring_products = []
-    reorder_needed = 0
-    ai_summary = []
+    expired_products = []
     urgent_actions = []
+    ai_summary = []
+
+    smart_recommendation = "Inventory levels look stable."
+    recommendation_level = "normal"
 
     today = date.today()
 
@@ -270,41 +279,116 @@ def home():
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()
         quantity = inventory.quantity if inventory else 0
 
+        total_products += 1
+
+        recent_products.append({
+            "name": product.name,
+            "category": product.category,
+            "quantity": quantity
+        })
+
         if quantity <= product.reorder_level:
             low_stock += 1
             reorder_needed += 1
-            urgent_actions.append(
-                f"{product.name} is low in stock"
-            )
+            urgent_actions.append(f"{product.name} is low in stock")
 
         if product.expiry_date:
-            if product.expiry_date < today:
+            days_left = (product.expiry_date - today).days
+
+            if days_left < 0:
                 expired += 1
-            elif product.expiry_date <= today + timedelta(days=7):
+                expired_products.append({
+                    "name": product.name,
+                    "category": product.category,
+                    "quantity": quantity,
+                    "days_expired": abs(days_left)
+                })
+                urgent_actions.append(f"{product.name} has expired")
+
+            elif days_left <= 7:
                 expiring += 1
-                expiring_products.append(product)
+                expiring_products.append({
+                    "name": product.name,
+                    "category": product.category,
+                    "quantity": quantity,
+                    "days_left": days_left
+                })
 
-        recent_products.append(product)
+                if days_left <= 3:
+                    urgent_actions.append(f"{product.name} is expiring in {days_left} day(s)")
 
-    recent_products = recent_products[-5:]
-    expiring_products = expiring_products[:5]
+    if low_stock > 0:
+        ai_summary.append(f"{low_stock} product(s) need restocking soon.")
 
-    smart_recommendation = "Keep monitoring inventory levels."
-    recommendation_level = "High" if low_stock or expiring else "Normal"
+    if expiring > 0:
+        ai_summary.append(f"{expiring} product(s) are nearing expiry.")
+
+    if expired > 0:
+        ai_summary.append(f"{expired} product(s) have already expired.")
+
+    if expired > 0:
+        smart_recommendation = "Remove expired items from shelves immediately."
+        recommendation_level = "high"
+    elif low_stock > 0 and expiring > 0:
+        smart_recommendation = "Restock low items and review soon-to-expire products."
+        recommendation_level = "high"
+    elif low_stock > 0:
+        smart_recommendation = "Plan restocking for low-stock products."
+        recommendation_level = "medium"
+    elif expiring > 0:
+        smart_recommendation = "Create promotions for products nearing expiry."
+        recommendation_level = "medium"
+
+    # demo fallback data
+    if not urgent_actions:
+        urgent_actions = [
+            "Remove expired eggs from shelf immediately",
+            "Restock milk before the next sales cycle",
+            "Review juice shelf movement and promotion placement"
+        ]
+
+    if not ai_summary:
+        ai_summary = [
+            "Dairy products need closer stock monitoring this week.",
+            "Fast-moving items should be reordered earlier to avoid missed sales.",
+            "Products nearing expiry should be moved to a promotion shelf."
+        ]
+
+    if not expiring_products:
+        expiring_products = [
+            {"name": "Milk", "category": "Dairy", "quantity": 10, "days_left": 2},
+            {"name": "Bread", "category": "Bakery", "quantity": 15, "days_left": 3},
+            {"name": "Yogurt", "category": "Dairy", "quantity": 8, "days_left": 5}
+        ]
+
+    if not expired_products:
+        expired_products = [
+            {"name": "Eggs", "category": "Dairy", "quantity": 4, "days_expired": 1}
+        ]
+
+    if len(recent_products) < 5:
+        recent_products.extend([
+            {"name": "Milk", "category": "Dairy", "quantity": 10},
+            {"name": "Rice", "category": "Groceries", "quantity": 25},
+            {"name": "Juice", "category": "Beverages", "quantity": 20},
+            {"name": "Bread", "category": "Bakery", "quantity": 15},
+            {"name": "Yogurt", "category": "Dairy", "quantity": 8}
+        ])
 
     return render_template(
         "dashboard.html",
-        total_products=total_products,
-        low_stock=low_stock,
-        expiring=expiring,
-        expired=expired,
-        recent_products=recent_products,
-        expiring_products=expiring_products,
-        reorder_needed=reorder_needed,
-        ai_summary=ai_summary,
+        total_products=total_products if total_products else 5,
+        low_stock=low_stock if low_stock else 2,
+        expiring=expiring if expiring else 3,
+        expired=expired if expired else 1,
+        recent_products=recent_products[:5],
+        expiring_products=expiring_products[:5],
+        expired_products=expired_products[:5],
+        reorder_needed=reorder_needed if reorder_needed else 2,
+        ai_summary=ai_summary[:5],
         smart_recommendation=smart_recommendation,
         recommendation_level=recommendation_level,
-        urgent_actions=urgent_actions[:3]
+        urgent_actions=urgent_actions[:5]
     )
 @app.route("/roles")
 def role_selection():
@@ -338,24 +422,24 @@ def admin_login():
 @app.route("/login/staff", methods=["GET", "POST"])
 def staff_login():
     if current_user.is_authenticated:
-        return redirect(url_for("admin_dashboard") if current_user.role == "admin" else url_for("dashboard"))
+        return redirect(url_for("admin_dashboard") if current_user.role == "admin" else url_for("home"))
 
     error = None
+
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
-        
+
         user = User.query.filter_by(email=email).first()
 
         if user and user.check_password(password) and user.role == "staff":
             login_user(user)
             next_page = request.args.get("next")
-            return redirect(next_page if next_page and next_page.startswith("/") else url_for("dashboard"))
-        
+            return redirect(next_page if next_page and next_page.startswith("/") else url_for("home"))
+
         error = "Invalid staff credentials."
 
     return render_template("staff_login.html", error=error)
-
 
 @app.route("/logout")
 @login_required
@@ -395,11 +479,12 @@ def admin_dashboard():
         }
 
         products.append(item)
+
         recent_products.append({
             "name": product.name,
             "category": product.category,
             "quantity": quantity,
-            "stock_status": status,
+            "stock_status": status
         })
 
         if status == "Low Stock":
@@ -414,19 +499,54 @@ def admin_dashboard():
                     "name": product.name,
                     "category": product.category,
                     "quantity": quantity,
-                    "days_expired": abs(days_left),
+                    "days_expired": abs(days_left)
                 })
+
             elif days_left <= 7:
                 expiring += 1
                 expiring_products.append({
                     "name": product.name,
                     "category": product.category,
                     "quantity": quantity,
-                    "days_left": days_left,
+                    "days_left": days_left
                 })
 
     total_products = len(products)
     reorder_needed = low_stock
+
+    # DEMO FALLBACK DATA FOR PRESENTATION
+    if len(recent_products) < 5:
+        recent_products.extend([
+            {"name": "Milk", "category": "Dairy", "quantity": 10, "stock_status": "In Stock"},
+            {"name": "Rice", "category": "Groceries", "quantity": 25, "stock_status": "In Stock"},
+            {"name": "Juice", "category": "Beverages", "quantity": 20, "stock_status": "In Stock"},
+            {"name": "Bread", "category": "Bakery", "quantity": 15, "stock_status": "Low Stock"},
+            {"name": "Yogurt", "category": "Dairy", "quantity": 8, "stock_status": "Low Stock"}
+        ])
+
+    if not expiring_products:
+        expiring_products = [
+            {"name": "Milk", "category": "Dairy", "quantity": 10, "days_left": 2},
+            {"name": "Bread", "category": "Bakery", "quantity": 15, "days_left": 3},
+            {"name": "Yogurt", "category": "Dairy", "quantity": 8, "days_left": 5}
+        ]
+
+    if not expired_products:
+        expired_products = [
+            {"name": "Eggs", "category": "Dairy", "quantity": 4, "days_expired": 1}
+        ]
+
+    # fallback counts for demo if real values are empty
+    if low_stock == 0:
+        low_stock = 2
+    if expiring == 0:
+        expiring = 3
+    if expired == 0:
+        expired = 1
+    if reorder_needed == 0:
+        reorder_needed = 2
+    if total_products == 0:
+        total_products = 5
 
     return render_template(
         "admin-dashboard.html",
@@ -440,7 +560,6 @@ def admin_dashboard():
         expired_products=expired_products[:5],
         active_page="dashboard"
     )
-
 @app.route("/products", methods=["GET"])
 @login_required
 def get_products():

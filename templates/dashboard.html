@@ -71,34 +71,32 @@
     </div>
 </div>
 
-<div class="panel list-panel urgent-actions">
+<div class="panel list-panel">
     <h2 class="panel-title">Immediate Action Required</h2>
-    <div class="item-meta">Priority tasks that need attention based on current inventory conditions.</div>
+    <p class="subtitle">Priority tasks that need attention based on current inventory conditions.</p>
 
-    {% for action in urgent_actions %}
-    <div class="list-row">
-        <div class="item-title">• {{ action }}</div>
-    </div>
+    {% if urgent_actions %}
+        {% for action in urgent_actions %}
+            <div class="list-row">
+                <div class="item-title danger-text">• {{ action }}</div>
+            </div>
+        {% endfor %}
     {% else %}
-    <div class="empty">No urgent actions right now.</div>
-    {% endfor %}
+        <div class="empty">No urgent actions right now.</div>
+    {% endif %}
 </div>
 <div class="panel list-panel">
     <h2 class="panel-title">Store Action Insights</h2>
 
-    {% for item in ai_summary %}
-    <div class="ai-summary-row">
-        <div class="ai-summary-text">
-            <div class="item-title">{{ item.title }}</div>
-            <div class="item-meta">{{ item.message }}</div>
-        </div>
-        <div class="ai-summary-badge">
-            <div class="status-badge {{ item.level }}">{{ item.level|title }}</div>
-        </div>
-    </div>
+    {% if ai_summary %}
+        {% for insight in ai_summary %}
+            <div class="list-row">
+                <div class="item-title">{{ insight }}</div>
+            </div>
+        {% endfor %}
     {% else %}
-    <div class="empty">No AI insights available yet.</div>
-    {% endfor %}
+        <div class="empty">No AI insights available yet.</div>
+    {% endif %}
 </div>
   <div class="dashboard-grid">
     <div class="panel list-panel">
