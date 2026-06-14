@@ -336,53 +336,60 @@ def logout():
 def admin_dashboard():
     check_alerts()
 
-    products = product_inventory_rows()
-    total_products = len(products)
+    products = []
+    total_products = 0
     low_stock = 0
     expiring = 0
     expired = 0
-    today = date.today()
-
+    reorder_needed = 0
     recent_products = []
     expiring_products = []
     expired_products = []
 
-    for product in products:
-        quantity = product["quantity"]
-        status = product["stock_status"]
+    today = date.today()
 
-        recent_products.append({
-            "name": product["name"],
-            "category": product["category"],
+    for product in Product.query.all():
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
+        status = "Low Stock" if quantity <= product.reorder_level else "In Stock"
+
+        item = {
+            "product_id": product.product_id,
+            "name": product.name,
+            "category": product.category,
             "quantity": quantity,
             "stock_status": status,
-        })
+            "expiry_date": product.expiry_date
+        }
+
+        products.append(item)
+        recent_products.append(item)
 
         if status == "Low Stock":
             low_stock += 1
+            reorder_needed += 1
 
-        if product["expiry_date"]:
-            days_left = (product["expiry_date"] - today).days
+        if product.expiry_date:
+            days_left = (product.expiry_date - today).days
 
             if days_left < 0:
                 expired += 1
                 expired_products.append({
-                    "name": product["name"],
-                    "category": product["category"],
+                    "name": product.name,
+                    "category": product.category,
                     "quantity": quantity,
-                    "days_expired": abs(days_left),
+                    "days_left": days_left
                 })
-
             elif days_left <= 7:
                 expiring += 1
                 expiring_products.append({
-                    "name": product["name"],
-                    "category": product["category"],
+                    "name": product.name,
+                    "category": product.category,
                     "quantity": quantity,
-                    "days_left": days_left,
+                    "days_left": days_left
                 })
 
-    reorder_needed = low_stock
+    total_products = len(products)
 
     return render_template(
         "admin-dashboard.html",
@@ -394,7 +401,7 @@ def admin_dashboard():
         recent_products=recent_products[:5],
         expiring_products=expiring_products[:5],
         expired_products=expired_products[:5],
-        active_page="dashboard",
+        active_page="dashboard"
     )
 
 
