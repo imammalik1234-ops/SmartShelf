@@ -66,6 +66,10 @@
         Alerts
     </a>
 
+    <a href="{{ url_for('ai_predictions_page') }}" class="nav-link {% if active_page == 'ai_predictions' %}active{% endif %}">
+    <span>AI Predictions</span>
+    </a>
+    
     <a class="{{ 'active' if active_page == 'record_sale' else '' }}" href="/admin-record-sale">
     <span class="nav-icon">S</span> Record Sale
 </a>

@@ -261,17 +261,17 @@ def home():
     total_products = 0
     low_stock = 0
     expiring = 0
-    expired = 0
     reorder_needed = 0
 
     recent_products = []
     expiring_products = []
-    expired_products = []
     urgent_actions = []
     ai_summary = []
+    top_selling_items = []
+    reorder_items = []
 
-    smart_recommendation = "Inventory levels look stable."
-    recommendation_level = "normal"
+    smart_recommendation = "Monitor inventory regularly and take action on critical stock movements."
+    recommendation_level = "high"
 
     today = date.today()
 
@@ -291,20 +291,18 @@ def home():
             low_stock += 1
             reorder_needed += 1
             urgent_actions.append(f"{product.name} is low in stock")
+            reorder_items.append({
+                "name": product.name,
+                "category": product.category,
+                "stock": quantity,
+                "reorder_level": product.reorder_level,
+                "suggested_order": max(product.reorder_level * 2 - quantity, 5)
+            })
 
         if product.expiry_date:
             days_left = (product.expiry_date - today).days
-
             if days_left < 0:
-                expired += 1
-                expired_products.append({
-                    "name": product.name,
-                    "category": product.category,
-                    "quantity": quantity,
-                    "days_expired": abs(days_left)
-                })
                 urgent_actions.append(f"{product.name} has expired")
-
             elif days_left <= 7:
                 expiring += 1
                 expiring_products.append({
@@ -313,82 +311,84 @@ def home():
                     "quantity": quantity,
                     "days_left": days_left
                 })
-
                 if days_left <= 3:
                     urgent_actions.append(f"{product.name} is expiring in {days_left} day(s)")
 
     if low_stock > 0:
         ai_summary.append(f"{low_stock} product(s) need restocking soon.")
-
     if expiring > 0:
         ai_summary.append(f"{expiring} product(s) are nearing expiry.")
+    if reorder_needed > 0:
+        ai_summary.append(f"{reorder_needed} product(s) should be reviewed for reorder planning.")
 
-    if expired > 0:
-        ai_summary.append(f"{expired} product(s) have already expired.")
-
-    if expired > 0:
-        smart_recommendation = "Remove expired items from shelves immediately."
-        recommendation_level = "high"
-    elif low_stock > 0 and expiring > 0:
-        smart_recommendation = "Restock low items and review soon-to-expire products."
-        recommendation_level = "high"
-    elif low_stock > 0:
-        smart_recommendation = "Plan restocking for low-stock products."
-        recommendation_level = "medium"
-    elif expiring > 0:
-        smart_recommendation = "Create promotions for products nearing expiry."
-        recommendation_level = "medium"
-
-    # demo fallback data
+    # demo / presentation fallback
     if not urgent_actions:
         urgent_actions = [
             "Remove expired eggs from shelf immediately",
-            "Restock milk before the next sales cycle",
+            "Restock milk before next sales cycle",
             "Review juice shelf movement and promotion placement"
         ]
 
     if not ai_summary:
         ai_summary = [
-            "Dairy products need closer stock monitoring this week.",
-            "Fast-moving items should be reordered earlier to avoid missed sales.",
-            "Products nearing expiry should be moved to a promotion shelf."
-        ]
+        "Dairy items need closer monitoring this week.",
+        "Fast-moving products should be reordered earlier.",
+        "Move near-expiry products to a promotion shelf.",
+        "Low stock items may affect tomorrow's sales.",
+        "Check shelf refill timing for high-demand items."
+    ]
 
     if not expiring_products:
         expiring_products = [
-            {"name": "Milk", "category": "Dairy", "quantity": 10, "days_left": 2},
-            {"name": "Bread", "category": "Bakery", "quantity": 15, "days_left": 3},
-            {"name": "Yogurt", "category": "Dairy", "quantity": 8, "days_left": 5}
-        ]
-
-    if not expired_products:
-        expired_products = [
-            {"name": "Eggs", "category": "Dairy", "quantity": 4, "days_expired": 1}
-        ]
+        {"name": "Milk", "category": "Dairy", "quantity": 10, "days_left": 2},
+        {"name": "Bread", "category": "Bakery", "quantity": 15, "days_left": 3},
+        {"name": "Yogurt", "category": "Dairy", "quantity": 8, "days_left": 5},
+        {"name": "Eggs", "category": "Dairy", "quantity": 4, "days_left": 1},
+        {"name": "Juice", "category": "Beverages", "quantity": 12, "days_left": 6}
+    ]
 
     if len(recent_products) < 5:
         recent_products.extend([
-            {"name": "Milk", "category": "Dairy", "quantity": 10},
+            {"name": "Eggs", "category": "Dairy", "quantity": 4},
             {"name": "Rice", "category": "Groceries", "quantity": 25},
             {"name": "Juice", "category": "Beverages", "quantity": 20},
-            {"name": "Bread", "category": "Bakery", "quantity": 15},
-            {"name": "Yogurt", "category": "Dairy", "quantity": 8}
+            {"name": "Milk", "category": "Dairy", "quantity": 10},
+            {"name": "Bread", "category": "Bakery", "quantity": 15}
         ])
+
+    if not top_selling_items:
+        top_selling_items = [
+        {"name": "Milk", "category": "Dairy", "sold": 60},
+        {"name": "Bread", "category": "Bakery", "sold": 42},
+        {"name": "Juice", "category": "Beverages", "sold": 31},
+        {"name": "Rice", "category": "Groceries", "sold": 28},
+        {"name": "Eggs", "category": "Dairy", "sold": 24},
+        {"name": "Yogurt", "category": "Dairy", "sold": 18}
+    ]
+
+    if not reorder_items:
+        reorder_items = [
+        {"name": "Milk", "category": "Dairy", "stock": 4, "reorder_level": 10, "suggested_order": 20},
+        {"name": "Bread", "category": "Bakery", "stock": 5, "reorder_level": 12, "suggested_order": 18},
+        {"name": "Yogurt", "category": "Dairy", "stock": 3, "reorder_level": 8, "suggested_order": 12},
+        {"name": "Eggs", "category": "Dairy", "stock": 6, "reorder_level": 10, "suggested_order": 14},
+        {"name": "Juice", "category": "Beverages", "stock": 7, "reorder_level": 11, "suggested_order": 15}
+    ]
 
     return render_template(
         "dashboard.html",
         total_products=total_products if total_products else 5,
         low_stock=low_stock if low_stock else 2,
         expiring=expiring if expiring else 3,
-        expired=expired if expired else 1,
+        reorder_needed=reorder_needed if reorder_needed else 2,
         recent_products=recent_products[:5],
         expiring_products=expiring_products[:5],
-        expired_products=expired_products[:5],
-        reorder_needed=reorder_needed if reorder_needed else 2,
+        urgent_actions=urgent_actions[:5],
         ai_summary=ai_summary[:5],
         smart_recommendation=smart_recommendation,
         recommendation_level=recommendation_level,
-        urgent_actions=urgent_actions[:5]
+        top_selling_items=top_selling_items[:6],
+        reorder_items=reorder_items[:5]
     )
 @app.route("/roles")
 def role_selection():
@@ -689,7 +689,6 @@ def delete_product_api(product_id):
 
     return {"message": "Product deleted successfully"}
 
-@app.route('/inventory', methods=['GET'])
 
 @app.route("/inventory", methods=["GET"])
 @login_required
@@ -735,6 +734,119 @@ def inventory_page():
         "inventory.html",
         active_page="inventory",
         products=products
+    )
+@app.route("/inventory/all-products")
+@login_required
+def all_products_page():
+    products = []
+
+    for product in Product.query.all():
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
+        status = "Low Stock" if quantity <= product.reorder_level else "In Stock"
+
+        products.append({
+            "product_id": product.product_id,
+            "name": product.name,
+            "category": product.category,
+            "supplier": product.supplier,
+            "quantity": quantity,
+            "expiry_date": product.expiry_date,
+            "stock_status": status
+        })
+
+    return render_template(
+        "inventory_filtered.html",
+        page_title="All Products",
+        products=products,
+        active_page="inventory"
+    )
+
+
+@app.route("/inventory/low-stock")
+@login_required
+def low_stock_page():
+    products = []
+
+    for product in Product.query.all():
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
+
+        if quantity <= product.reorder_level:
+            products.append({
+                "product_id": product.product_id,
+                "name": product.name,
+                "category": product.category,
+                "supplier": product.supplier,
+                "quantity": quantity,
+                "expiry_date": product.expiry_date,
+                "stock_status": "Low Stock"
+            })
+
+    return render_template(
+        "inventory_filtered.html",
+        page_title="Low Stock Items",
+        products=products,
+        active_page="inventory"
+    )
+
+
+@app.route("/inventory/reorder-needed")
+@login_required
+def reorder_needed_page():
+    products = []
+
+    for product in Product.query.all():
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
+
+        if quantity <= product.reorder_level:
+            products.append({
+                "product_id": product.product_id,
+                "name": product.name,
+                "category": product.category,
+                "supplier": product.supplier,
+                "quantity": quantity,
+                "expiry_date": product.expiry_date,
+                "stock_status": "Reorder Needed"
+            })
+
+    return render_template(
+        "inventory_filtered.html",
+        page_title="Reorder Needed",
+        products=products,
+        active_page="inventory"
+    )
+
+
+@app.route("/alerts/expiring-soon")
+@login_required
+def expiring_soon_page():
+    products = []
+    today = date.today()
+
+    for product in Product.query.all():
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        quantity = inventory.quantity if inventory else 0
+
+        if product.expiry_date:
+            days_left = (product.expiry_date - today).days
+            if 0 <= days_left <= 7:
+                products.append({
+                    "product_id": product.product_id,
+                    "name": product.name,
+                    "category": product.category,
+                    "supplier": product.supplier,
+                    "quantity": quantity,
+                    "expiry_date": product.expiry_date,
+                    "days_left": days_left
+                })
+
+    return render_template(
+        "expiring_filtered.html",
+        page_title="Expiring Soon",
+        products=products,
+        active_page="alerts"
     )
 @app.route("/add-product", methods=["GET", "POST"])
 @login_required
@@ -927,7 +1039,7 @@ def run_alert_check():
     check_alerts()
     return {"message": "Alerts checked successfully"}
 
-@app.route('/alerts', methods=['GET'])
+
 
 @app.route("/alerts", methods=["GET"])
 @login_required
@@ -953,7 +1065,7 @@ def get_alerts():
 def record_sale_page():
     return render_template('record-sale.html')
 
-@app.route('/expiry-alerts')
+
 @app.route("/expiry-alerts")
 @login_required
 def expiry_alerts_page():
@@ -1121,10 +1233,11 @@ def get_predictions():
     return result
 
 
-@app.route('/ai-predictions')
+@app.route("/ai-predictions")
 @login_required
+@role_required("admin")
 def ai_predictions_page():
-    predictions = []
+    return render_template("ai_predictions.html", active_page="ai_predictions")
 
     for product in Product.query.all():
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()

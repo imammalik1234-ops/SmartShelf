@@ -4,188 +4,158 @@
 {% block title %}Dashboard - Smart Shelf{% endblock %}
 
 {% block content %}
-  <h1>Staff Dashboard</h1>
-  <p class="subtitle">Quick overview of inventory status</p>
-
-  <div class="stats-grid">
-    <div class="panel stat-card">
-      <div>
-        <h3>Tracked Products</h3>
-        <strong>{{ total_products }}</strong>
-      </div>
-      <div class="stat-badge green-badge">I</div>
-    </div>
-
-    <div class="panel stat-card">
-      <div>
-        <h3>Low Stock Alerts</h3>
-        <strong>{{ low_stock }}</strong>
-      </div>
-      <div class="stat-badge orange-badge">L</div>
-    </div>
-
-    <div class="panel stat-card">
-      <div>
-        <h3>Expiry Risks</h3>
-        <strong>{{ expiring }}</strong>
-      </div>
-      <div class="stat-badge red-badge">!</div>
-    </div>
-
-    <div class="panel stat-card">
-      <div>
-        <h3>Reorder Actions</h3>
-        <strong>{{ reorder_needed }}</strong>
-      </div>
-      <div class="stat-badge red-badge">X</div>
-    </div>
-    </div>
-    <div class="panel list-panel chart-panel">
-    <h2 class="panel-title">Inventory Overview Chart</h2>
-    <div class="chart-wrapper">
-        <canvas id="inventoryStatusChart"></canvas>
-    </div>
-</div>
-
-<div class="panel list-panel">
-    <h2 class="panel-title">Smart Recommendation</h2>
-    <div class="smart-recommendation-box">
-        <div class="ai-summary-row">
-            <div class="ai-summary-text">
-                <div class="item-title">Today's Suggestion</div>
-                <div class="item-meta">AI-generated action for store performance</div>
-                <div class="item-meta"><strong>Why this matters:</strong> helps prevent missed sales and stockout risk.</div>
-                <div class="item-meta">{{ smart_recommendation }}</div>
-                <div style="margin-top:12px;">
-                    <a href="/ai-predictions" class="btn btn-primary">View Restocking Plan</a>
-                </div>
-            </div>
-
-            <div class="ai-summary-badge">
-                <div class="item-meta" style="margin-bottom:6px; text-align:center;">Priority</div>
-                <div class="status-badge {{ recommendation_level }}">
-                    {{ recommendation_level|title }}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="panel list-panel">
-    <h2 class="panel-title">Immediate Action Required</h2>
-    <p class="subtitle">Priority tasks that need attention based on current inventory conditions.</p>
-
-    {% if urgent_actions %}
-        {% for action in urgent_actions %}
-            <div class="list-row">
-                <div class="item-title danger-text">• {{ action }}</div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty">No urgent actions right now.</div>
-    {% endif %}
-</div>
-<div class="panel list-panel">
-    <h2 class="panel-title">Store Action Insights</h2>
-
-    {% if ai_summary %}
-        {% for insight in ai_summary %}
-            <div class="list-row">
-                <div class="item-title">{{ insight }}</div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty">No AI insights available yet.</div>
-    {% endif %}
-</div>
-  <div class="dashboard-grid">
-    <div class="panel list-panel">
-      <h2 class="panel-title">Recent Products</h2>
-      {% for product in recent_products %}
-        <div class="list-row">
-          <div>
-            <div class="item-title">{{ product.name }}</div>
-            <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
-          </div>
-          <div class="item-side">
-            <div>Qty: {{ product.quantity }}</div>
-            <div class="{{ 'danger-text' if product.stock_status != 'In Stock' else 'ok-text' }}">
-              {{ product.stock_status }}
-            </div>
-          </div>
-        </div>
-      {% else %}
-        <div class="empty">No products yet.</div>
-      {% endfor %}
-    </div>
-
-    <div class="panel list-panel">
-      <h2 class="panel-title">Expiring Soon</h2>
-      {% for product in expiring_products %}
-        <div class="list-row">
-          <div>
-            <div class="item-title">{{ product.name }}</div>
-            <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
-          </div>
-          <div class="item-side">
-            <div>{{ product.days_left }} days</div>
-            <div>Qty: {{ product.quantity }}</div>
-          </div>
-        </div>
-      {% else %}
-        <div class="empty">No products expiring soon.</div>
-      {% endfor %}
-    </div>
-  </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const ctx = document.getElementById('inventoryStatusChart');
-
-  if (ctx) {
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Tracked Products', 'Low Stock Alerts', 'Expiry Risks', 'Reorder Actions'],
-        datasets: [{
-          label: 'Inventory Overview',
-          data: [{{ total_products }}, {{ low_stock }}, {{ expiring }}, {{ reorder_needed }}],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  }
-});
-</script>
-  <div class="panel list-panel dashboard-expired-panel">
-    <h2 class="panel-title">Expired Products</h2>
-    {% for product in expired_products %}
-      <div class="list-row">
+<div class="staff-dashboard-page">
+    <div class="dashboard-header-row">
         <div>
-          <div class="item-title">{{ product.name }}</div>
-          <div class="item-meta">{{ product.category or 'Uncategorized' }}</div>
+            <h1 class="dashboard-title">Staff Dashboard</h1>
+            <p class="dashboard-subtitle">Quick overview of inventory status.</p>
         </div>
-        <div class="item-side danger-text">
-          <div>{{ product.days_expired }} days expired</div>
-          <div>Qty: {{ product.quantity }}</div>
+    </div>
+
+    <div class="clickable-stats">
+        <a href="{{ url_for('inventory_page') }}" class="stat-card-link">
+            <div class="panel stat-card">
+                <div class="stat-icon total-icon">📦</div>
+                <div>
+                    <div class="stat-label">Total Products</div>
+                    <div class="stat-value">{{ total_products }}</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('inventory_page') }}" class="stat-card-link">
+            <div class="panel stat-card">
+                <div class="stat-icon low-icon">⚠️</div>
+                <div>
+                    <div class="stat-label">Low Stock Items</div>
+                    <div class="stat-value">{{ low_stock }}</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('expiry_alerts_page') }}" class="stat-card-link">
+            <div class="panel stat-card">
+                <div class="stat-icon expiring-icon">⏳</div>
+                <div>
+                    <div class="stat-label">Expiring Soon</div>
+                    <div class="stat-value">{{ expiring }}</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('inventory_page') }}" class="stat-card-link">
+            <div class="panel stat-card">
+                <div class="stat-icon reorder-icon">🛒</div>
+                <div>
+                    <div class="stat-label">Reorder Needed</div>
+                    <div class="stat-value">{{ reorder_needed }}</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="dashboard-main-grid">
+        <div class="panel feature-panel">
+            <h2 class="panel-title">Smart Recommendation</h2>
+            <div class="recommendation-box">
+                <div class="recommendation-heading">Today’s Suggestion</div>
+                <p class="recommendation-text">{{ smart_recommendation }}</p>
+                <div class="recommendation-priority">Priority: {{ recommendation_level|title }}</div>
+            </div>
         </div>
-      </div>
-    {% else %}
-      <div class="empty">No expired products.</div>
-    {% endfor %}
-  </div>
+
+        <div class="panel feature-panel">
+            <h2 class="panel-title">Immediate Action Required</h2>
+            <p class="panel-subtitle">Priority tasks that need attention based on current inventory conditions.</p>
+            {% if urgent_actions %}
+                {% for action in urgent_actions %}
+                    <div class="list-row">
+                        <div class="item-title danger-text">• {{ action }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">No urgent actions right now.</div>
+            {% endif %}
+        </div>
+
+        <div class="panel feature-panel">
+            <h2 class="panel-title">Store Action Insights</h2>
+            {% if ai_summary %}
+                {% for insight in ai_summary %}
+                    <div class="list-row">
+                        <div class="item-title">{{ insight }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">No AI insights available yet.</div>
+            {% endif %}
+        </div>
+
+        <div class="panel feature-panel">
+            <h2 class="panel-title">Top Selling Items</h2>
+            {% if top_selling_items %}
+                {% for item in top_selling_items %}
+                    <div class="list-row split-row">
+                        <div>
+                            <div class="item-title">{{ item.name }}</div>
+                            <div class="item-meta">{{ item.category }}</div>
+                        </div>
+                        <div class="item-side sold-badge">{{ item.sold }} sold</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">No sales data available.</div>
+            {% endif %}
+        </div>
+
+        <div class="panel feature-panel">
+            <h2 class="panel-title">Expiring Soon</h2>
+            {% if expiring_products %}
+                {% for product in expiring_products %}
+                    <div class="list-row split-row">
+                        <div>
+                            <div class="item-title">{{ product.name }}</div>
+                            <div class="item-meta">{{ product.category }}</div>
+                        </div>
+                        <div class="item-side">{{ product.days_left }} day{% if product.days_left != 1 %}s{% endif %}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">No products expiring soon.</div>
+            {% endif %}
+        </div>
+
+        <div class="panel feature-panel full-width-panel">
+            <h2 class="panel-title">Items to Reorder Now</h2>
+            {% if reorder_items %}
+                <div class="reorder-table-wrap">
+                    <table class="reorder-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Reorder Level</th>
+                                <th>Suggested Order</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in reorder_items %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.stock }}</td>
+                                    <td>{{ item.reorder_level }}</td>
+                                    <td>{{ item.suggested_order }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty">No reorder items right now.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

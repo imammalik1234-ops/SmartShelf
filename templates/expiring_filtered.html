@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set active_page = "alerts" %}
+
+{% block title %}{{ page_title }} - Smart Shelf{% endblock %}
+
+{% block content %}
+<div class="staff-dashboard-page">
+    <div class="dashboard-header-row">
+        <div>
+            <h1 class="dashboard-title">{{ page_title }}</h1>
+            <p class="dashboard-subtitle">Products nearing expiry.</p>
+        </div>
+    </div>
+
+    <div class="panel feature-panel full-width-panel">
+        {% if products %}
+            <div class="reorder-table-wrap">
+                <table class="reorder-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Supplier</th>
+                            <th>Current Stock</th>
+                            <th>Expiry Date</th>
+                            <th>Days Left</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.category }}</td>
+                                <td>{{ product.supplier }}</td>
+                                <td>{{ product.quantity }}</td>
+                                <td>{{ product.expiry_date }}</td>
+                                <td>{{ product.days_left }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty">No products expiring soon.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
