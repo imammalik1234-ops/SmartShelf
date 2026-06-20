@@ -922,7 +922,9 @@ def add_product():
 
     return render_template(
         "add-product.html",
-        active_page="add_product"
+         active_page="add_product",
+         catalog={},
+         form_data={}
     )
 
 def delete_product_records(product_id):

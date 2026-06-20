@@ -2046,3 +2046,29 @@ th, td {
   padding: 10px;
   text-align: center;
 }
+.stat-link {
+  display: inline-block;   /* instead of block */
+  text-decoration: none;
+  color: inherit;
+}
+
+.stat-card {
+  cursor: pointer;
+  padding: 16px;
+  border-radius: 10px;
+  background: white;
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+}
+
+.stats-row {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-link {
+  flex: 1;   /* makes all cards equal width */
+}
