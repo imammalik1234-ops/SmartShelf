@@ -16,6 +16,7 @@ load_dotenv(override=True)
 
 
 app = Flask(__name__)
+app.secret_key = "secret123"
 CORS(app)
 app.secret_key = os.getenv("SECRET_KEY", "change-this-secret")
 
@@ -390,6 +391,51 @@ def home():
         top_selling_items=top_selling_items[:6],
         reorder_items=reorder_items[:5]
     )
+
+@app.route('/dashboard')
+def dashboard():
+
+    staff_data = [
+        {"id": "STF001", "status": "On Shift"},
+        {"id": "STF002", "status": "On Shift"},
+        {"id": "STF003", "status": "HalfDay"},
+        {"id": "STF004", "status": "On Shift"},
+        {"id": "STF005", "status": "On Shift"},
+        {"id": "STF006", "status": "On Shift"},
+        {"id": "STF007", "status": "On Shift"},
+    ]
+
+    staff_preview = staff_data[:5]
+
+    return render_template(
+        'dashboard.html',
+        staff=staff_preview
+    )
+
+@app.route('/staff')
+def staff():
+    return render_template('staff.html')
+
+@app.route('/notify-manager')
+def notify_manager():
+    from flask import flash, redirect, url_for
+    flash("Manager has been notified!", "success")
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/reassign-tasks')
+def reassign_tasks():
+    from flask import flash, redirect, url_for
+    flash("Tasks reassigned successfully!", "info")
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/request-replacement')
+def request_replacement():
+    from flask import flash, redirect, url_for
+    flash("Replacement request sent!", "warning")
+    return redirect(url_for('dashboard'))
+
 @app.route("/roles")
 def role_selection():
     

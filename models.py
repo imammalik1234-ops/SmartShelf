@@ -19,6 +19,15 @@ class User(UserMixin, db.Model):
 
     def get_id(self):
         return str(self.user_id)
+    
+    from database import db
+
+class Staff(db.Model):
+    __tablename__ = 'staff'
+
+    id = db.Column(db.Integer, primary_key=True)
+    staff_id = db.Column(db.String(10))
+    status = db.Column(db.String(20))
 
 
 class Product(db.Model):
