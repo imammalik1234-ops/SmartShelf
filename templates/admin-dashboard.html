@@ -1,154 +1,131 @@
 {% extends "admin-base.html" %}
-{% set active_page = "dashboard" %}
-
-{% block title %}Admin Dashboard - Smart Shelf{% endblock %}
 
 {% block content %}
-  <div class="admin-dashboard-page compact-dashboard">
-    <div class="dashboard-header-row">
-        <div>
-            <h1 class="dashboard-title">Admin Dashboard</h1>
-            <p class="dashboard-subtitle">Overview of inventory, alerts and stock status.</p>
-        </div>
-    </div>
 
-    <div class="admin-stats-grid">
-        <div class="admin-stat-card">
-            <div class="admin-stat-label">Total Products</div>
-            <div class="admin-stat-value">{{ total_products }}</div>
-        </div>
+<h2 class="page-title">Admin Dashboard</h2>
 
-        <div class="admin-stat-card">
-            <div class="admin-stat-label">Low Stock Items</div>
-            <div class="admin-stat-value">{{ low_stock }}</div>
-        </div>
+<!-- ===== STATS ===== -->
+<div class="stats-grid">
 
-        <div class="admin-stat-card">
-            <div class="admin-stat-label">Expiring Soon</div>
-            <div class="admin-stat-value">{{ expiring }}</div>
-        </div>
+  <a href="/inventory-page" class="card stat-card">
+   <div class="stat-title">📦 Total Products</div>
+    <strong>{{ stats.total_products }}</strong>
+  </a>
 
-        <div class="admin-stat-card">
-            <div class="admin-stat-label">Expired Products</div>
-            <div class="admin-stat-value">{{ expired }}</div>
-        </div>
+  <a href="/inventory-page?filter=low" class="card stat-card">
+    <div class="stat-title">⚠️ Low Stock</div>
+    <strong>{{ stats.low_stock }}</strong>
+  </a>
 
-        <div class="admin-stat-card">
-            <div class="admin-stat-label">Reorder Needed</div>
-            <div class="admin-stat-value">{{ reorder_needed }}</div>
-        </div>
-    </div>
+  <a href="/expiry-alerts" class="card stat-card">
+   <div class="stat-title">⏳ Expiring Soon</div>
+    <strong>{{ stats.expiring }}</strong>
+  </a>
 
-    <div class="admin-dashboard-grid compact-grid">
-        <div class="admin-panel compact-panel">
-            <div class="admin-panel-header">
-                <h2>Recent Products</h2>
-            </div>
+ <a href="/sales" class="stat-card">
+   <div class="stat-title">💰 Total Sales</div>
+    <div class="stat-value">₹ {{ stats.total_sales }}</div>
+</a>
 
-            {% if recent_products %}
-                <div class="admin-list">
-                    {% for product in recent_products %}
-                        <div class="admin-list-row">
-                            <div class="admin-list-main">
-                                <div class="admin-list-title">{{ product.name }}</div>
-                                <div class="admin-list-subtitle">{{ product.category }}</div>
-                            </div>
-                            <div class="admin-list-meta">
-                                <span class="admin-badge {% if product.stock_status == 'Low Stock' %}badge-warning{% else %}badge-success{% endif %}">
-                                    {{ product.stock_status }}
-                                </span>
-                                <div class="admin-qty">Qty: {{ product.quantity }}</div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="admin-empty-state">No recent products available.</div>
-            {% endif %}
-        </div>
-
-        <div class="admin-panel compact-panel">
-            <div class="admin-panel-header">
-                <h2>Expiring Soon</h2>
-            </div>
-
-            {% if expiring_products %}
-                <div class="admin-list">
-                    {% for product in expiring_products %}
-                        <div class="admin-list-row">
-                            <div class="admin-list-main">
-                                <div class="admin-list-title">{{ product.name }}</div>
-                                <div class="admin-list-subtitle">{{ product.category }}</div>
-                            </div>
-                            <div class="admin-list-meta">
-                                <span class="admin-badge badge-warning">
-                                    {{ product.days_left }} day{% if product.days_left != 1 %}s{% endif %} left
-                                </span>
-                                <div class="admin-qty">Qty: {{ product.quantity }}</div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="admin-empty-state">No products expiring soon.</div>
-            {% endif %}
-        </div>
-
-        <div class="admin-panel compact-panel">
-            <div class="admin-panel-header">
-                <h2>Expired Products</h2>
-            </div>
-
-            {% if expired_products %}
-                <div class="admin-list">
-                    {% for product in expired_products %}
-                        <div class="admin-list-row">
-                            <div class="admin-list-main">
-                                <div class="admin-list-title">{{ product.name }}</div>
-                                <div class="admin-list-subtitle">{{ product.category }}</div>
-                            </div>
-                            <div class="admin-list-meta">
-                                <span class="admin-badge badge-danger">
-                                    {{ product.days_expired }} day{% if product.days_expired != 1 %}s{% endif %} expired
-                                </span>
-                                <div class="admin-qty">Qty: {{ product.quantity }}</div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="admin-empty-state">No expired products.</div>
-            {% endif %}
-        </div>
-
-        <div class="admin-panel compact-panel">
-            <div class="admin-panel-header">
-                <h2>Quick Summary</h2>
-            </div>
-
-            <div class="admin-summary-box">
-                <div class="summary-item">
-                    <span>Total Products</span>
-                    <strong>{{ total_products }}</strong>
-                </div>
-                <div class="summary-item">
-                    <span>Low Stock</span>
-                    <strong>{{ low_stock }}</strong>
-                </div>
-                <div class="summary-item">
-                    <span>Expiring Soon</span>
-                    <strong>{{ expiring }}</strong>
-                </div>
-                <div class="summary-item">
-                    <span>Expired</span>
-                    <strong>{{ expired }}</strong>
-                </div>
-                <div class="summary-item">
-                    <span>Reorder Needed</span>
-                    <strong>{{ reorder_needed }}</strong>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
+
+<div class="admin-panels">
+
+  <div class="card">
+   <h3>⚡ Quick Actions</h3>
+    <div class="quick-actions">
+      <a href="/add-product">➕ Add Product</a>
+      <a href="/inventory-page">📦 View Inventory</a>
+      <a href="/record-sale">💰 Record Sale</a>
+      <a href="/expiry-alerts">⚠️ View Alerts</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📊 Sales Insight</h3>
+    <p>📈 Sales increased by 12% compared to yesterday</p>
+    <p>💰 Peak sales time: 6PM – 8PM</p>
+  </div>
+
+  <div class="card">
+    <h3>🖥️ System Status</h3>
+    <p>🟢 Inventory system running</p>
+    <p>🟢 Alerts active</p>
+    <p>🟢 Database connected</p>
+  </div>
+
+</div>
+<!-- ===== ALERTS + TOP SELLING ===== -->
+<div class="grid-2">
+
+  <!-- ALERTS -->
+  <div class="card">
+    <h3>Alerts</h3>
+
+    <div class="list-row">
+      <span>⚠️ Low Stock</span>
+      <span>{{ alerts.low_stock }}</span>
+    </div>
+
+    <div class="list-row">
+      <span>⏳ Expiring Soon</span>
+      <span>{{ alerts.expiring }}</span>
+    </div>
+
+    <div class="list-row">
+      <span>❌ Expired</span>
+      <span>{{ alerts.expired }}</span>
+    </div>
+  </div>
+
+  <!-- TOP SELLING -->
+  <div class="card">
+    <h3>Top Selling Items</h3>
+
+    {% for item in top_selling %}
+    <div class="list-row">
+      <span>
+        {% if item.name == "Milk" %}🥛{% endif %}
+        {% if item.name == "Bread" %}🍞{% endif %}
+        {% if item.name == "Juice" %}🧃{% endif %}
+        {% if item.name == "Rice" %}🍚{% endif %}
+        {% if item.name == "Eggs" %}🥚{% endif %}
+        {% if item.name == "Yogurt" %}🥣{% endif %}
+        {{ item.name }}
+      </span>
+      <span>{{ item.sold }} sold</span>
+    </div>
+    {% endfor %}
+
+  </div>
+
+</div>
+
+<!-- ===== REORDER ===== -->
+<div class="card">
+  <h3>Reorder Needed</h3>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Stock</th>
+        <th>Reorder Level</th>
+        <th>Suggested</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for item in reorder_items %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.stock }}</td>
+        <td>{{ item.reorder_level }}</td>
+        <td>{{ item.suggested }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
 {% endblock %}

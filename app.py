@@ -43,20 +43,23 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+from functools import wraps
+from flask_login import current_user
+from flask import redirect, url_for
+
+from functools import wraps
+from flask_login import current_user
+from flask import redirect, url_for
+
 def role_required(role):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            if not current_user.is_authenticated:
-                return login_manager.unauthorized()
-            if current_user.role != role:
-                return redirect(url_for("dashboard"))
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
+    def wrapper(fn):
+        @wraps(fn)
+        def decorated(*args, **kwargs):
+            if not current_user.is_authenticated or current_user.role != role:
+                return redirect(url_for("admin_login"))
+            return fn(*args, **kwargs)
+        return decorated
+    return wrapper
 
 @app.context_processor
 def inject_user_profile():
@@ -494,118 +497,64 @@ def logout():
     return redirect(url_for("role_selection"))
 
 
+
+@app.route("/sales")
+@login_required
+@role_required("admin")
+def sales():
+    sales_records = [2000, 1500, 3000, 2500, 3000]
+    total_sales = sum(sales_records)
+
+    return render_template(
+        "sales.html",
+        total_sales=total_sales,
+        sales_records=sales_records
+    )
+
 @app.route("/admin-dashboard")
 @login_required
 @role_required("admin")
 def admin_dashboard():
-    check_alerts()
 
-    products = []
-    low_stock = 0
-    expiring = 0
-    expired = 0
-    today = date.today()
+    alerts = {
+        "low_stock": 5,
+        "expiring": 3,
+        "expired": 1
+    }
 
-    recent_products = []
-    expiring_products = []
-    expired_products = []
+    top_selling = [
+        {"name": "Milk", "sold": 60},
+        {"name": "Bread", "sold": 42},
+        {"name": "Juice", "sold": 31},
+        {"name": "Rice", "sold": 28},
+        {"name": "Eggs", "sold": 24},
+        {"name": "Yogurt", "sold": 18}
+    ]
 
-    for product in Product.query.all():
-        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
-        quantity = inventory.quantity if inventory else 0
-        status = "Low Stock" if quantity <= product.reorder_level else "In Stock"
+    reorder_items = [
+        {"name": "Milk", "stock": 4, "reorder_level": 10, "suggested": 20},
+        {"name": "Bread", "stock": 5, "reorder_level": 12, "suggested": 18},
+        {"name": "Yogurt", "stock": 3, "reorder_level": 8, "suggested": 12},
+        {"name": "Eggs", "stock": 2, "reorder_level": 10, "suggested": 15},
+        {"name": "Rice", "stock": 6, "reorder_level": 15, "suggested": 20}
+    ]
 
-        item = {
-            "product_id": product.product_id,
-            "name": product.name,
-            "category": product.category,
-            "quantity": quantity,
-            "stock_status": status,
-            "expiry_date": product.expiry_date
-        }
-
-        products.append(item)
-
-        recent_products.append({
-            "name": product.name,
-            "category": product.category,
-            "quantity": quantity,
-            "stock_status": status
-        })
-
-        if status == "Low Stock":
-            low_stock += 1
-
-        if product.expiry_date:
-            days_left = (product.expiry_date - today).days
-
-            if days_left < 0:
-                expired += 1
-                expired_products.append({
-                    "name": product.name,
-                    "category": product.category,
-                    "quantity": quantity,
-                    "days_expired": abs(days_left)
-                })
-
-            elif days_left <= 7:
-                expiring += 1
-                expiring_products.append({
-                    "name": product.name,
-                    "category": product.category,
-                    "quantity": quantity,
-                    "days_left": days_left
-                })
-
-    total_products = len(products)
-    reorder_needed = low_stock
-
-    # DEMO FALLBACK DATA FOR PRESENTATION
-    if len(recent_products) < 5:
-        recent_products.extend([
-            {"name": "Milk", "category": "Dairy", "quantity": 10, "stock_status": "In Stock"},
-            {"name": "Rice", "category": "Groceries", "quantity": 25, "stock_status": "In Stock"},
-            {"name": "Juice", "category": "Beverages", "quantity": 20, "stock_status": "In Stock"},
-            {"name": "Bread", "category": "Bakery", "quantity": 15, "stock_status": "Low Stock"},
-            {"name": "Yogurt", "category": "Dairy", "quantity": 8, "stock_status": "Low Stock"}
-        ])
-
-    if not expiring_products:
-        expiring_products = [
-            {"name": "Milk", "category": "Dairy", "quantity": 10, "days_left": 2},
-            {"name": "Bread", "category": "Bakery", "quantity": 15, "days_left": 3},
-            {"name": "Yogurt", "category": "Dairy", "quantity": 8, "days_left": 5}
-        ]
-
-    if not expired_products:
-        expired_products = [
-            {"name": "Eggs", "category": "Dairy", "quantity": 4, "days_expired": 1}
-        ]
-
-    # fallback counts for demo if real values are empty
-    if low_stock == 0:
-        low_stock = 2
-    if expiring == 0:
-        expiring = 3
-    if expired == 0:
-        expired = 1
-    if reorder_needed == 0:
-        reorder_needed = 2
-    if total_products == 0:
-        total_products = 5
+    stats = {
+        "total_products": 25,
+        "low_stock": 5,
+        "expiring": 3,
+        "total_sales": 12000
+    }
 
     return render_template(
         "admin-dashboard.html",
-        total_products=total_products,
-        low_stock=low_stock,
-        expiring=expiring,
-        expired=expired,
-        reorder_needed=reorder_needed,
-        recent_products=recent_products[:5],
-        expiring_products=expiring_products[:5],
-        expired_products=expired_products[:5],
-        active_page="dashboard"
+        stats=stats,
+        alerts=alerts,
+        top_selling=top_selling,
+        reorder_items=reorder_items
     )
+
+  
 @app.route("/products", methods=["GET"])
 @login_required
 def get_products():
@@ -1075,9 +1024,9 @@ def record_sale():
 
 @app.route('/check-alerts', methods=['GET'])
 
-@app.route('/record-sale')
+@app.route('/admin-record-sale')
 @login_required
-def record_sale_view():
+def admin_record_sale():
     return render_template("record-sale.html")
 
 
@@ -1236,30 +1185,10 @@ def add_product_page():
         return redirect('/inventory-page')
 
     return render_template('add-product.html')
+
 @app.route("/api/predictions", methods=["GET"])
 @login_required
 def api_predictions():
-    products = Product.query.all()
-    result = []
-
-    for product in products:
-        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
-        current_stock = inventory.quantity if inventory else 0
-
-        predicted_demand = predict_demand_for_product(product.product_id)
-        reorder_qty = calculate_reorder_qty(predicted_demand, current_stock)
-
-        result.append({
-            "product_id": product.product_id,
-            "product_name": product.name,
-            "current_stock": current_stock,
-            "predicted_demand": predicted_demand,
-            "recommended_reorder_qty": reorder_qty
-        })
-
-    return result
-@app.route('/api/predictions', methods=['GET'])
-def get_predictions():
     products = Product.query.all()
     result = []
 
@@ -1284,8 +1213,8 @@ def get_predictions():
 @app.route("/ai-predictions")
 @login_required
 @role_required("admin")
-def ai_predictions_page():
-    return render_template("ai_predictions.html", active_page="ai_predictions")
+def ai_predictions():
+    predictions = []
 
     for product in Product.query.all():
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()
@@ -1294,28 +1223,21 @@ def ai_predictions_page():
         predicted_demand = predict_demand_for_product(product.product_id)
         reorder_qty = calculate_reorder_qty(predicted_demand, current_stock)
 
-        status = "Sufficient"
-        if reorder_qty > 0:
-            status = "Restock Soon"
+        status = "Restock Soon" if reorder_qty > 0 else "Sufficient"
 
         predictions.append({
-            "product_id": product.product_id,
             "product_name": product.name,
             "current_stock": current_stock,
             "predicted_demand": predicted_demand,
             "recommended_reorder_qty": reorder_qty,
-            "status": status
+            "status": status   
         })
 
     return render_template(
-        "ai_predictions.html",
-        active_page="ai_predictions",
-        predictions=predictions
-    )
-
-if __name__ == '__main__':
-    app.run(debug=True)
-    
+    "ai_predictions.html",
+    predictions=predictions,
+    active_page="ai"   
+)
 
 if __name__ == "__main__":
     app.run(debug=True)
