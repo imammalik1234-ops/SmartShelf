@@ -4,142 +4,193 @@
 {% block title %}Admin Alerts - Smart Shelf{% endblock %}
 
 {% block content %}
-<div class="admin-dashboard-page">
-    <div class="dashboard-header-row">
-        <div>
-            <h1 class="dashboard-title">Admin Alerts</h1>
-            <p class="dashboard-subtitle">Monitor low stock and expiry-related alerts.</p>
-        </div>
+<h1>Alerts</h1>
+<p class="subtitle">Monitor low stock and products nearing expiration</p>
+
+<div class="stats-grid">
+  <div class="panel stat-card">
+    <div>
+      <h3>Expiring Soon</h3>
+      <strong id="expiringCount">0</strong>
     </div>
+    <div class="stat-badge orange-badge">!</div>
+  </div>
 
-    <div class="admin-stats-grid admin-stats-grid-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-label">Total Alerts</div>
-            <div class="admin-stat-value">{{ alerts|length }}</div>
-        </div>
-
-        <div class="admin-stat-card">
-            <div class="admin-stat-label">Active Alerts</div>
-            <div class="admin-stat-value">
-                {{ alerts | selectattr("status", "equalto", "active") | list | length }}
-            </div>
-        </div>
-
-        <div class="admin-stat-card">
-            <div class="admin-stat-label">Resolved Alerts</div>
-            <div class="admin-stat-value">
-                {{ alerts | selectattr("status", "equalto", "resolved") | list | length }}
-            </div>
-        </div>
+  <div class="panel stat-card">
+    <div>
+      <h3>Low Stock</h3>
+      <strong id="lowStockCount">0</strong>
     </div>
-
-    <div class="admin-dashboard-grid">
-        <div class="admin-panel">
-            <div class="admin-panel-header">
-                <h2>All Alerts</h2>
-            </div>
-
-            {% if alerts %}
-                <div class="admin-list">
-                    {% for alert in alerts %}
-                        <div class="admin-list-row">
-                            <div class="admin-list-main">
-                                <div class="admin-list-title">{{ alert.product_name }}</div>
-                                <div class="admin-list-subtitle">{{ alert.category }}</div>
-                                <div class="admin-list-subtitle">{{ alert.message }}</div>
-                            </div>
-                            <div class="admin-list-meta">
-                                <span class="admin-badge {% if alert.status == 'active' %}badge-warning{% else %}badge-success{% endif %}">
-                                    {{ alert.status }}
-                                </span>
-                                <div class="admin-qty">{{ alert.created_at }}</div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="admin-empty-state">No alerts available.</div>
-            {% endif %}
-        </div>
-
-        <div class="admin-panel">
-            <div class="admin-panel-header">
-                <h2>Active Alerts</h2>
-            </div>
-
-            {% set has_active = false %}
-            <div class="admin-list">
-                {% for alert in alerts %}
-                    {% if alert.status == "active" %}
-                        {% set has_active = true %}
-                        <div class="admin-list-row">
-                            <div class="admin-list-main">
-                                <div class="admin-list-title">{{ alert.product_name }}</div>
-                                <div class="admin-list-subtitle">{{ alert.category }}</div>
-                                <div class="admin-list-subtitle">{{ alert.message }}</div>
-                            </div>
-                            <div class="admin-list-meta">
-                                <span class="admin-badge badge-warning">{{ alert.status }}</span>
-                                <div class="admin-qty">{{ alert.created_at }}</div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-
-            {% if alerts | selectattr("status", "equalto", "active") | list | length == 0 %}
-                <div class="admin-empty-state">No active alerts.</div>
-            {% endif %}
-        </div>
-
-        <div class="admin-panel">
-            <div class="admin-panel-header">
-                <h2>Resolved Alerts</h2>
-            </div>
-
-            <div class="admin-list">
-                {% for alert in alerts %}
-                    {% if alert.status == "resolved" %}
-                        <div class="admin-list-row">
-                            <div class="admin-list-main">
-                                <div class="admin-list-title">{{ alert.product_name }}</div>
-                                <div class="admin-list-subtitle">{{ alert.category }}</div>
-                                <div class="admin-list-subtitle">{{ alert.message }}</div>
-                            </div>
-                            <div class="admin-list-meta">
-                                <span class="admin-badge badge-success">{{ alert.status }}</span>
-                                <div class="admin-qty">{{ alert.created_at }}</div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-
-            {% if alerts | selectattr("status", "equalto", "resolved") | list | length == 0 %}
-                <div class="admin-empty-state">No resolved alerts.</div>
-            {% endif %}
-        </div>
-
-        <div class="admin-panel">
-            <div class="admin-panel-header">
-                <h2>Alerts Summary</h2>
-            </div>
-
-            <div class="admin-summary-box">
-                <div class="summary-item">
-                    <span>Total Alerts</span>
-                    <strong>{{ alerts|length }}</strong>
-                </div>
-                <div class="summary-item">
-                    <span>Active Alerts</span>
-                    <strong>{{ alerts | selectattr("status", "equalto", "active") | list | length }}</strong>
-                </div>
-                <div class="summary-item">
-                    <span>Resolved Alerts</span>
-                    <strong>{{ alerts | selectattr("status", "equalto", "resolved") | list | length }}</strong>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="stat-badge blue-badge">L</div>
+  </div>
 </div>
+
+<h2 class="alerts-main-title">Active Alerts</h2>
+
+<div class="alerts-section-grid">
+  <div class="panel list-panel alert-category-card">
+    <h3 class="alert-section-title">Expiring Soon</h3>
+    <div id="expiringList"></div>
+  </div>
+
+  <div class="panel list-panel alert-category-card">
+    <h3 class="alert-section-title">Low Stock</h3>
+    <div id="lowStockList"></div>
+  </div>
+</div>
+
+<style>
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .alerts-main-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #111827;
+    margin: 40px 0 20px 0;
+  }
+
+  .alerts-section-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .alert-category-card {
+    padding: 24px;
+  }
+
+  .alert-section-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 20px 0;
+  }
+
+  .section-empty {
+    color: #6b7280;
+    padding: 14px 0;
+    font-weight: 600;
+  }
+
+  .blue-badge {
+    background: #eef2ff !important;
+    color: #4f63f6 !important;
+  }
+
+  .recommendation-box {
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    color: #4f63f6;
+  }
+
+  .recommendation-title {
+    color: #4f63f6;
+    font-weight: 800;
+    margin-bottom: 5px;
+  }
+
+  .recommendation-text {
+    color: #4f63f6;
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const API_URL = "";
+
+  function extractDaysLeft(message) {
+    const match = message.match(/Days left:\s*(-?\d+)/i);
+    return match ? Number(match[1]) : null;
+  }
+
+  function getRecommendation(alertType, daysLeft) {
+    if (alertType === "LOW_STOCK") {
+      return "Review stock level and consider reordering soon.";
+    }
+
+    if (daysLeft <= 1) {
+      return "Urgent: Apply discount or bundle offers to reduce waste.";
+    }
+
+    if (daysLeft <= 3) {
+      return "Apply promotion or bundle offer to speed up sales.";
+    }
+
+    return "Monitor closely. Consider promotions if needed.";
+  }
+
+  function createAlertRow(alert) {
+    const daysLeft = extractDaysLeft(alert.message);
+
+    const row = document.createElement("div");
+    row.className = "list-row";
+
+    row.innerHTML = `
+      <div>
+        <div class="item-title">${alert.product_name || "Product"}</div>
+        <div class="item-meta">${alert.message}</div>
+
+        <div class="recommendation-box">
+          <div class="recommendation-title">✣ Recommendation</div>
+          <div class="recommendation-text">${getRecommendation(alert.alert_type, daysLeft)}</div>
+        </div>
+      </div>
+
+      <div class="item-side ${alert.alert_type === "LOW_STOCK" || daysLeft <= 2 ? "danger-text" : ""}">
+        ${
+          alert.alert_type === "LOW_STOCK"
+            ? "Low stock"
+            : daysLeft + " days"
+        }
+      </div>
+    `;
+
+    return row;
+  }
+
+  async function loadAlerts() {
+    const response = await fetch(`${API_URL}/alerts`);
+    const alerts = await response.json();
+
+    const activeAlerts = alerts.filter(alert => alert.status === "active");
+
+    const expiryAlerts = activeAlerts.filter(alert => alert.alert_type === "EXPIRY");
+    const expiringSoon = expiryAlerts.filter(alert => extractDaysLeft(alert.message) >= 0);
+
+    const lowStockAlerts = activeAlerts.filter(alert => alert.alert_type === "LOW_STOCK");
+
+    document.getElementById("expiringCount").textContent = expiringSoon.length;
+    document.getElementById("lowStockCount").textContent = lowStockAlerts.length;
+
+    const expiringList = document.getElementById("expiringList");
+    const lowStockList = document.getElementById("lowStockList");
+
+    expiringList.innerHTML = "";
+    lowStockList.innerHTML = "";
+
+    if (expiringSoon.length === 0) {
+      expiringList.innerHTML = `<div class="section-empty">No expiring products.</div>`;
+    } else {
+      expiringSoon.forEach(alert => {
+        expiringList.appendChild(createAlertRow(alert));
+      });
+    }
+
+    if (lowStockAlerts.length === 0) {
+      lowStockList.innerHTML = `<div class="section-empty">No low stock products.</div>`;
+    } else {
+      lowStockAlerts.forEach(alert => {
+        lowStockList.appendChild(createAlertRow(alert));
+      });
+    }
+  }
+
+  loadAlerts();
+</script>
 {% endblock %}

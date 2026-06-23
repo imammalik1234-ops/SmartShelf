@@ -1022,12 +1022,11 @@ def record_sale():
         "remaining_stock": inventory.quantity
     }
 
-@app.route('/check-alerts', methods=['GET'])
 
 @app.route('/admin-record-sale')
 @login_required
 def admin_record_sale():
-    return render_template("record-sale.html")
+    return render_template("admin-record-sale.html")
 
 
 @app.route("/check-alerts", methods=["GET"])

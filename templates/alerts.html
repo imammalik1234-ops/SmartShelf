@@ -23,28 +23,21 @@
       </div>
       <div class="stat-badge red-badge">L</div>
     </div>
-
-    <div class="panel stat-card">
-      <div>
-        <h3>Expired</h3>
-        <strong id="expiredCount">0</strong>
-      </div>
-      <div class="stat-badge red-badge">X</div>
     </div>
-  </div>
 
-  <h2 class="alerts-main-title">Active Alerts</h2>
 
-  <div class="panel list-panel">
-  
+    <h2 class="alerts-main-title">Active Alerts</h2>
+
+  <div class="alerts-section-grid">
+  <div class="panel list-panel alert-category-card">
     <h3 class="alert-section-title">Expiring Soon</h3>
     <div id="expiringList"></div>
+  </div>
 
-    <h3 class="alert-section-title">Expired</h3>
-    <div id="expiredList"></div>
-
+  <div class="panel list-panel alert-category-card">
     <h3 class="alert-section-title">Low Stock</h3>
     <div id="lowStockList"></div>
+  </div>
   </div>
 
   <style>
@@ -65,6 +58,27 @@
       color: #6b7280;
       padding: 14px 0;
       font-weight: 600;
+    }
+
+    .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .alerts-section-grid {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 24px;
+     }
+
+    .alert-category-card {
+    padding: 24px;
+    }
+
+    .alert-section-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 20px 0;
     }
   </style>
 {% endblock %}
@@ -93,17 +107,15 @@
       <div class="item-side ${alert.alert_type !== "EXPIRY" || daysLeft <= 2 ? "danger-text" : ""}">
         ${
           alert.alert_type === "LOW_STOCK"
-            ? "Low stock"
-            : alert.alert_type === "EXPIRED"
-            ? "Expired"
-            : daysLeft + " days"
+          ? "Low stock"
+          : daysLeft + " days"
         }
       </div>
     `;
 
     return row;
   }
-
+  
   async function loadAlerts() {
     const response = await fetch(`${API_URL}/alerts`);
     const alerts = await response.json();
@@ -114,18 +126,18 @@
     const expiringSoon = expiryAlerts.filter(alert => extractDaysLeft(alert.message) >= 0);
 
     const lowStockAlerts = activeAlerts.filter(alert => alert.alert_type === "LOW_STOCK");
-    const expiredAlerts = activeAlerts.filter(alert => alert.alert_type === "EXPIRED");
+    
 
     document.getElementById("expiringCount").textContent = expiringSoon.length;
     document.getElementById("lowStockCount").textContent = lowStockAlerts.length;
-    document.getElementById("expiredCount").textContent = expiredAlerts.length;
+    
 
     const expiringList = document.getElementById("expiringList");
-    const expiredList = document.getElementById("expiredList");
+    
     const lowStockList = document.getElementById("lowStockList");
 
     expiringList.innerHTML = "";
-    expiredList.innerHTML = "";
+    
     lowStockList.innerHTML = "";
 
     if (expiringSoon.length === 0) {
@@ -136,13 +148,7 @@
       });
     }
 
-    if (expiredAlerts.length === 0) {
-      expiredList.innerHTML = `<div class="section-empty">No expired products.</div>`;
-    } else {
-      expiredAlerts.forEach(alert => {
-        expiredList.appendChild(createAlertRow(alert));
-      });
-    }
+    
 
     if (lowStockAlerts.length === 0) {
       lowStockList.innerHTML = `<div class="section-empty">No low stock products.</div>`;
