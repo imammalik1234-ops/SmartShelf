@@ -7,6 +7,10 @@ from dotenv import load_dotenv
 from functools import wraps
 from datetime import date, datetime, timedelta
 import os
+import io
+import csv
+from flask import Response, render_template, request, redirect, url_for
+from datetime import date
 
 from database import db
 from models import Alert, Inventory, Product, Sale, User
@@ -495,7 +499,6 @@ def staff_login():
 def logout():
     logout_user()
     return redirect(url_for("role_selection"))
-
 
 
 @app.route("/sales")
@@ -1237,6 +1240,72 @@ def ai_predictions():
     predictions=predictions,
     active_page="ai"   
 )
+
+@app.route("/admin-settings", methods=["GET", "POST"])
+@login_required
+@role_required("admin")
+def admin_settings():
+    success_message = None
+    error_message = None
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        
+        if action == "update_profile":
+            name = request.form.get("name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            
+            if name and email:
+                existing_user = User.query.filter(User.email == email, User.user_id != current_user.user_id).first()
+                if existing_user:
+                    error_message = "This email address is already registered to another account."
+                else:
+                    current_user.name = name
+                    current_user.email = email
+                    db.session.commit()
+                    success_message = "Profile settings saved and updated successfully!"
+
+    return render_template(
+        "settings.html",
+        active_page="settings",
+        success_message=success_message,
+        error_message=error_message,
+        profile_name=current_user.name,
+        profile_email=current_user.email
+    )
+
+
+@app.route("/admin-settings/export-data")
+@login_required
+@role_required("admin")
+def export_data():
+    products = Product.query.all()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(["Product ID", "Product Name", "Category", "Supplier", "Unit Price", "Current Stock", "Expiry Date", "Reorder Level"])
+    
+    for product in products:
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        current_stock = inventory.quantity if inventory else 0
+        
+        writer.writerow([
+            product.product_id,
+            product.name,
+            product.category or "N/A",
+            product.supplier or "N/A",
+            f"{product.unit_price:.2f}" if product.unit_price else "0.00",
+            current_stock,
+            product.expiry_date if product.expiry_date else "N/A",
+            product.reorder_level
+        ])
+    
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=smartshelf_inventory_{date.today()}.csv"}
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -16,10 +16,7 @@
     </a>
 
     <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center w-14 h-14 rounded-xl text-white mb-3 shadow-sm bg-[#00a651]">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-            </svg>
+        <img src="{{ url_for('static', filename='images/logo.png') }}" class="w-20 h-13 mb-1" alt="Smart Shelf Logo">
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-[#0f172a]">Smart Shelf</h1>
         
@@ -31,7 +28,7 @@
         </div>
     </div>
 
-    <div class="bg-white p-8 rounded-xl border border-[#edf2f7] shadow-sm w-full max-w-[420px]">
+    <div class="bg-white p-8 mt-6 rounded-xl border border-[#edf2f7] shadow-sm w-full max-w-[420px]">
         {% if error %}
         <div class="mb-4 p-2.5 rounded bg-red-50 text-xs font-medium text-red-600 border border-red-100 text-center">
             {{ error }}
@@ -60,8 +57,6 @@
             </div>
         </form>
     </div>
-
-    <p class="text-[11px] font-medium text-[#94a3b8] mt-6">Demo credentials: Email: staff@smartshelf.com Password: staff123</p>
 
 </body>
 </html>
