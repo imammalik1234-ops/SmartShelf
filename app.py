@@ -849,14 +849,50 @@ def expiring_soon_page():
 @app.route("/add-product", methods=["GET", "POST"])
 @login_required
 def add_product():
+    form_defaults = {
+        "category": "",
+        "product": "",
+        "variant": "",
+        "supplier": "",
+        "quantity": "",
+        "expiry_date": "",
+        "unit_price": "",
+        "reorder_level": "10",
+    }
+
     if request.method == "POST":
+        form_data = {
+            key: request.form.get(key, form_defaults[key]).strip()
+            for key in form_defaults
+        }
+        product_info = PRODUCT_CATALOG.get(form_data["category"], {}).get(form_data["product"])
+        errors = []
+
+        if product_info is None:
+            errors.append("Please select a valid category and product.")
+        else:
+            if form_data["variant"] not in product_info["variants"]:
+                errors.append("Please select a valid product variant.")
+            if form_data["supplier"] not in product_info["suppliers"]:
+                errors.append("Please select a valid supplier.")
+
+        if errors:
+            return render_template(
+                "add-product.html",
+                active_page="add_product",
+                catalog=PRODUCT_CATALOG,
+                form_data=form_data,
+                errors=errors,
+                tomorrow=(date.today() + timedelta(days=1)).isoformat()
+            ), 400
+
         new_product = Product(
-            name=request.form["name"],
-            category=request.form["category"],
-            supplier=request.form["supplier"],
-            unit_price=request.form["unit_price"],
-            expiry_date=parse_date(request.form["expiry_date"]),
-            reorder_level=request.form["reorder_level"]
+            name=form_data["product"],
+            category=form_data["category"],
+            supplier=form_data["supplier"],
+            unit_price=form_data["unit_price"],
+            expiry_date=parse_date(form_data["expiry_date"]),
+            reorder_level=form_data["reorder_level"]
         )
 
         db.session.add(new_product)
@@ -864,7 +900,7 @@ def add_product():
 
         inventory = Inventory(
             product_id=new_product.product_id,
-            quantity=request.form["quantity"]
+            quantity=form_data["quantity"]
         )
 
         db.session.add(inventory)
@@ -874,9 +910,11 @@ def add_product():
 
     return render_template(
         "add-product.html",
-         active_page="add_product",
-         catalog={},
-         form_data={}
+        active_page="add_product",
+        catalog=PRODUCT_CATALOG,
+        form_data=form_defaults,
+        errors=[],
+        tomorrow=(date.today() + timedelta(days=1)).isoformat()
     )
 
 def delete_product_records(product_id):
@@ -1158,35 +1196,6 @@ def delete_product_view(product_id):
     delete_product_records(product_id)
     return redirect("/admin-inventory")
 
-
-@app.route('/add-product', methods=['GET', 'POST'])
-def add_product_page():
-
-    if request.method == 'POST':
-
-        new_product = Product(
-            name=request.form['name'],
-            category=request.form['category'],
-            supplier=request.form['supplier'],
-            unit_price=request.form['unit_price'],
-            expiry_date=parse_date(request.form['expiry_date']),
-            reorder_level=request.form['reorder_level']
-        )
-
-        db.session.add(new_product)
-        db.session.commit()
-
-        inventory = Inventory(
-            product_id=new_product.product_id,
-            quantity=request.form['quantity']
-        )
-
-        db.session.add(inventory)
-        db.session.commit()
-
-        return redirect('/inventory-page')
-
-    return render_template('add-product.html')
 
 @app.route("/api/predictions", methods=["GET"])
 @login_required
