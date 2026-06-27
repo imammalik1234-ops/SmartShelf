@@ -1,214 +1,139 @@
 {% extends "base.html" %}
+{% set active_page = "dashboard" %}
+
+{% block title %}Staff Dashboard - Smart Shelf{% endblock %}
 
 {% block content %}
-
-<!-- HEADER -->
 <div class="dashboard-header">
   <h1 class="dashboard-title">Staff Dashboard</h1>
   <p class="dashboard-subtitle">Quick overview of the inventory status</p>
 </div>
 
-<!-- STATS -->
 <div class="stats-row">
-
-    <a href="/inventory-page?filter=low" class="stat-link">
-  <div class="stat-card">
-        <div class="stat-icon">⚠️</div>
-        <div class="stat-title">Low Stock Items</div>
-        <div class="stat-value"><b>2</b></div>
+  <a href="/inventory-page?filter=Low Stock" class="stat-link">
+    <div class="stat-card">
+      <div class="stat-title">Low Stock</div>
+      <div class="stat-value"><b>{{ stats.low_stock }}</b></div>
     </div>
   </a>
 
-    <a href="/expiry-alerts" class="stat-link">
-  <div class="stat-card">
-        <div class="stat-icon">⏳</div>
-        <div class="stat-title">Expiring Soon</div>
-        <div class="stat-value"><b>5</b></div>
+  <a href="/expiry-alerts" class="stat-link">
+    <div class="stat-card">
+      <div class="stat-title">Expiring Soon</div>
+      <div class="stat-value"><b>{{ stats.expiring }}</b></div>
     </div>
   </a>
 
-    <a href="/inventory-page?filter=reorder" class="stat-link">
-  <div class="stat-card">
-        <div class="stat-icon">🛒</div>
-        <div class="stat-title">Reorder Needed</div>
-        <div class="stat-value"><b>2</b></div>
+  <a href="/inventory-page?filter=Reorder Needed" class="stat-link">
+    <div class="stat-card">
+      <div class="stat-title">Reorder Needed</div>
+      <div class="stat-value"><b>{{ stats.reorder_needed }}</b></div>
     </div>
   </a>
-
 </div>
 
-<!-- MAIN GRID -->
-<div class="dashboard-grid">
+<div class="dashboard-grid staff-dashboard-grid">
+  <div class="two-panels">
+    <div class="card">
+      <h3>Top Selling Items</h3>
+      <table class="mini-table">
+        {% for item in top_selling_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.category }}</td>
+            <td>{{ item.sold }} sold</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="3" class="empty">No sales recorded yet.</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
 
-  <div class="three-panels">
-  
-  <div class="card green">
-    <h3>💡 Smart Recommendation</h3>
-    <p><strong>Today's Suggestion</strong></p>
-    <p>Monitor inventory regularly and take action on critical stock movements.</p>
-    <p><strong>Priority:</strong> High</p>
+    <div class="card">
+      <h3>Recent Alerts</h3>
+      <div class="staff-alert-list">
+        {% for alert in recent_alerts %}
+          <div class="list-row recent-alert-row recent-alert-{{ alert.priority }}">
+            <div>
+              <div class="item-title">{{ alert.product_name }}</div>
+              <div class="item-meta">{{ alert.alert_type }}</div>
+            </div>
+            <span class="status-badge {{ alert.priority }}">{{ alert.detail }}</span>
+          </div>
+        {% else %}
+          <div class="empty">No active alerts. Inventory is operating normally.</div>
+        {% endfor %}
+      </div>
+      <a href="/expiry-alerts" class="view-all">View All Alerts</a>
+    </div>
   </div>
 
-  <div class="card red">
-    <h3>🚨 Immediate Action Required</h3>
-    <ul>
-      <li>Eggs have expired</li>
-      <li>Milk stock is critically low</li>
-    </ul>
+  <div class="two-panels">
+    <div class="card">
+      <h3>Expiring Soon</h3>
+      <table class="mini-table">
+        {% for item in expiring_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.category }}</td>
+            <td class="{{ 'danger' if item.days_left <= 2 else 'warn' }}">{{ item.days_left }} day{{ '' if item.days_left == 1 else 's' }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="3" class="empty">No products expiring soon.</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Low Stock</h3>
+      <table class="mini-table">
+        {% for item in low_stock_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.category }}</td>
+            <td class="warn">{{ item.quantity }} left</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="3" class="empty">No low stock products.</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
   </div>
 
-  <div class="card blue">
-    <h3>📊 Store Action Insights</h3>
-    <ul>
-      <li>Fast-moving products should be reordered earlier</li>
-      <li>Move near-expiry items to promotion shelf</li>
-      <li>Low stock may affect tomorrow's sales</li>
-    </ul>
-  </div>
-
-</div>
-
- <div class="two-panels">
-
-  <!-- Top Selling -->
-  <div class="card">
-    <h3>📈 Top Selling Items</h3>
-    <table class="mini-table">
-      <tr><td>🥛 Milk</td><td>Dairy</td><td>60 sold</td></tr>
-      <tr><td>🍞 Bread</td><td>Bakery</td><td>42 sold</td></tr>
-      <tr><td>🧃 Juice</td><td>Beverages</td><td>31 sold</td></tr>
-      <tr><td>🍚 Rice</td><td>Groceries</td><td>28 sold</td></tr>
-      <tr><td>🥚 Eggs</td><td>Dairy</td><td>24 sold</td></tr>
+  <div class="box">
+    <h3>Reorder Needed</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Current Stock</th>
+          <th>Reorder Level</th>
+          <th>Suggested Order</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in reorder_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.category }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.reorder_level }}</td>
+            <td>{{ item.suggested_reorder }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="5" class="empty">No reorder needed.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
     </table>
   </div>
-
-  <!-- Expiring Soon -->
-  <div class="card">
-    <h3>⏳ Expiring Soon</h3>
-    <table class="mini-table">
-      <tr><td>🥛 Milk</td><td>Dairy</td><td class="danger">2 days</td></tr>
-      <tr><td>🍞 Bread</td><td>Bakery</td><td class="warn">3 days</td></tr>
-      <tr><td>🥣 Yogurt</td><td>Dairy</td><td class="warn">5 days</td></tr>
-      <tr><td>🥚 Eggs</td><td>Dairy</td><td class="danger">1 day</td></tr>
-      <tr><td>🧃 Juice</td><td>Beverages</td><td class="ok">6 days</td></tr>
-    </table>
-  </div>
-
 </div>
-
-<div class="panel staff-box">
-
-  <h3>👥 Staff Workload & Shift Coverage (Today)</h3>
-  <p>Live view of staff attendance and workload balance</p>
-
-  <div class="staff-grid">
-
-    <!-- ✅ SHIFT COVERAGE -->
-    <div class="box">
-      <h4>🕒 Shift Coverage</h4>
-      <p><b>Morning Shift</b></p>
-      <p>Required: 6</p>
-      <p>Present: 5</p>
-      <p>Missing: 1</p>
-
-      <div class="warning">
-        ⚠️ Coverage Risk (Missing 1)
-      </div>
-    </div>
-
-    <!-- ✅ STAFF STATUS -->
-    <div class="box">
-      <h4>👤 Staff Status</h4>
-
-      <div class="status-row">
-        <span>STF001</span>
-        <span class="badge green">On Shift</span>
-      </div>
-
-      <div class="status-row">
-        <span>STF002</span>
-        <span class="badge yellow">Late</span>
-      </div>
-
-      <div class="status-row">
-        <span>STF003</span>
-        <span class="badge blue">Half Day</span>
-      </div>
-
-      <div class="status-row">
-        <span>STF004</span>
-        <span class="badge green">On Shift</span>
-      </div>
-
-      <div class="status-row">
-        <span>STF005</span>
-        <span class="badge green">On Shift</span>
-      </div>
-
-      <a href="/staff" class="view-all">View All</a>
-    </div>
-
-    <!-- ✅ WORKLOAD BALANCE -->
-    <div class="box workload-box">
-
-      <h4>⚖️ Workload Balance</h4>
-
-      <p>Some staff are handling too many tasks</p>
-
-      <div class="workload-bar">
-        <div class="workload-fill"></div>
-      </div>
-
-      <div class="button-group">
-        <a href="/notify-manager" class="btn blue">Notify Manager</a>
-        <a href="/reassign-tasks" class="btn purple">Reassign Tasks</a>
-        <a href="/request-replacement" class="btn green">Request Replacement</a>
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-<!-- REORDER -->
-<div class="box">
-
-<h3>🛒 Items to Reorder Now</h3>
-
-<table>
-<tr>
-<th>Product</th>
-<th>Category</th>
-<th>Current Stock</th>
-<th>Reorder Level</th>
-<th>Suggested Order</th>
-</tr>
-
-<tr>
-<td>🥛 Milk</td><td>Dairy</td><td>4</td><td>10</td><td>20</td>
-</tr>
-<tr>
-<td>🍞 Bread</td><td>Bakery</td><td>5</td><td>12</td><td>18</td>
-</tr>
-<tr>
-<td>🍶 Yogurt</td><td>Dairy</td><td>3</td><td>8</td><td>12</td>
-</tr>
-<tr>
-<td>🥚 Eggs</td><td>Dairy</td><td>6</td><td>10</td><td>14</td>
-</tr>
-<tr>
-<td>🧃 Juice</td><td>Beverages</td><td>7</td><td>11</td><td>15</td>
-</tr>
-
-</table>
-
-</div>
-
-<script>
-function notifyManager(){ alert("Manager notified"); }
-function reassignTasks(){ alert("Tasks reassigned"); }
-function requestReplacement(){ alert("Replacement requested"); }
-</script>
-
 {% endblock %}

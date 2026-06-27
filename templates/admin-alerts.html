@@ -5,52 +5,106 @@
 
 {% block content %}
 <h1>Alerts</h1>
-<p class="subtitle">Monitor low stock and products nearing expiration</p>
-
-<div class="stats-grid">
-  <div class="panel stat-card">
-    <div>
-      <h3>Expiring Soon</h3>
-      <strong id="expiringCount">0</strong>
-    </div>
-    <div class="stat-badge orange-badge">!</div>
-  </div>
-
-  <div class="panel stat-card">
-    <div>
-      <h3>Low Stock</h3>
-      <strong id="lowStockCount">0</strong>
-    </div>
-    <div class="stat-badge blue-badge">L</div>
-  </div>
-</div>
-
-<h2 class="alerts-main-title">Active Alerts</h2>
+<p class="subtitle">Actionable inventory events that need attention</p>
 
 <div class="alerts-section-grid">
   <div class="panel list-panel alert-category-card">
-    <h3 class="alert-section-title">Expiring Soon</h3>
-    <div id="expiringList"></div>
+    <h3 class="alert-section-title">Low Stock</h3>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Current Stock</th>
+          <th>Reorder Level</th>
+          <th>Suggested Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in low_stock_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.reorder_level }}</td>
+            <td>Reorder at least {{ item.suggested_reorder }} unit{{ '' if item.suggested_reorder == 1 else 's' }}.</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="empty">No low stock products.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
   <div class="panel list-panel alert-category-card">
-    <h3 class="alert-section-title">Low Stock</h3>
-    <div id="lowStockList"></div>
+    <h3 class="alert-section-title">Expiring Soon</h3>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Days Remaining</th>
+          <th>Suggested Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in expiring_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.days_left }}</td>
+            <td>
+              {% if item.days_left <= 1 %}
+                Prioritize sale or remove from shelf.
+              {% elif item.days_left <= 3 %}
+                Move to promotion shelf.
+              {% else %}
+                Monitor and plan promotion if stock remains high.
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="empty">No products expiring soon.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel list-panel alert-category-card full-alert-section">
+    <h3 class="alert-section-title">Reorder Needed</h3>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Supplier</th>
+          <th>Current Stock</th>
+          <th>Suggested Reorder Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in reorder_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.supplier }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.suggested_reorder }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="empty">No reorder action needed.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 
 <style>
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .alerts-main-title {
-    font-size: 24px;
-    font-weight: 800;
-    color: #111827;
-    margin: 40px 0 20px 0;
-  }
-
   .alerts-section-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -61,136 +115,21 @@
     padding: 24px;
   }
 
+  .full-alert-section {
+    grid-column: 1 / -1;
+  }
+
   .alert-section-title {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 800;
     color: #111827;
-    margin: 0 0 20px 0;
+    margin: 0 0 18px 0;
   }
 
-  .section-empty {
-    color: #6b7280;
-    padding: 14px 0;
-    font-weight: 600;
-  }
-
-  .blue-badge {
-    background: #eef2ff !important;
-    color: #4f63f6 !important;
-  }
-
-  .recommendation-box {
-    background: #eef2ff;
-    border: 1px solid #c7d2fe;
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-top: 12px;
-    color: #4f63f6;
-  }
-
-  .recommendation-title {
-    color: #4f63f6;
-    font-weight: 800;
-    margin-bottom: 5px;
-  }
-
-  .recommendation-text {
-    color: #4f63f6;
+  @media (max-width: 900px) {
+    .alerts-section-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
-{% endblock %}
-
-{% block scripts %}
-<script>
-  const API_URL = "";
-
-  function extractDaysLeft(message) {
-    const match = message.match(/Days left:\s*(-?\d+)/i);
-    return match ? Number(match[1]) : null;
-  }
-
-  function getRecommendation(alertType, daysLeft) {
-    if (alertType === "LOW_STOCK") {
-      return "Review stock level and consider reordering soon.";
-    }
-
-    if (daysLeft <= 1) {
-      return "Urgent: Apply discount or bundle offers to reduce waste.";
-    }
-
-    if (daysLeft <= 3) {
-      return "Apply promotion or bundle offer to speed up sales.";
-    }
-
-    return "Monitor closely. Consider promotions if needed.";
-  }
-
-  function createAlertRow(alert) {
-    const daysLeft = extractDaysLeft(alert.message);
-
-    const row = document.createElement("div");
-    row.className = "list-row";
-
-    row.innerHTML = `
-      <div>
-        <div class="item-title">${alert.product_name || "Product"}</div>
-        <div class="item-meta">${alert.message}</div>
-
-        <div class="recommendation-box">
-          <div class="recommendation-title">✣ Recommendation</div>
-          <div class="recommendation-text">${getRecommendation(alert.alert_type, daysLeft)}</div>
-        </div>
-      </div>
-
-      <div class="item-side ${alert.alert_type === "LOW_STOCK" || daysLeft <= 2 ? "danger-text" : ""}">
-        ${
-          alert.alert_type === "LOW_STOCK"
-            ? "Low stock"
-            : daysLeft + " days"
-        }
-      </div>
-    `;
-
-    return row;
-  }
-
-  async function loadAlerts() {
-    const response = await fetch(`${API_URL}/alerts`);
-    const alerts = await response.json();
-
-    const activeAlerts = alerts.filter(alert => alert.status === "active");
-
-    const expiryAlerts = activeAlerts.filter(alert => alert.alert_type === "EXPIRY");
-    const expiringSoon = expiryAlerts.filter(alert => extractDaysLeft(alert.message) >= 0);
-
-    const lowStockAlerts = activeAlerts.filter(alert => alert.alert_type === "LOW_STOCK");
-
-    document.getElementById("expiringCount").textContent = expiringSoon.length;
-    document.getElementById("lowStockCount").textContent = lowStockAlerts.length;
-
-    const expiringList = document.getElementById("expiringList");
-    const lowStockList = document.getElementById("lowStockList");
-
-    expiringList.innerHTML = "";
-    lowStockList.innerHTML = "";
-
-    if (expiringSoon.length === 0) {
-      expiringList.innerHTML = `<div class="section-empty">No expiring products.</div>`;
-    } else {
-      expiringSoon.forEach(alert => {
-        expiringList.appendChild(createAlertRow(alert));
-      });
-    }
-
-    if (lowStockAlerts.length === 0) {
-      lowStockList.innerHTML = `<div class="section-empty">No low stock products.</div>`;
-    } else {
-      lowStockAlerts.forEach(alert => {
-        lowStockList.appendChild(createAlertRow(alert));
-      });
-    }
-  }
-
-  loadAlerts();
-</script>
 {% endblock %}

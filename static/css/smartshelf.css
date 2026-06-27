@@ -2471,3 +2471,228 @@ h2 {
     flex-direction: column;
     gap: 20px;
 }
+
+/* ===== STAFF RECOVERY: INVENTORY, ALERTS, DASHBOARD ===== */
+
+.staff-dashboard-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.staff-alert-list .status-badge,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status-badge.info {
+  background: #eaf4ff;
+  color: #175cd3;
+}
+
+.status-badge.warning {
+  background: #fff4e5;
+  color: #b54708;
+}
+
+.status-badge.danger {
+  background: #fdeaea;
+  color: #b42318;
+}
+
+.recent-alert-row {
+  align-items: center;
+}
+
+.recent-alert-danger {
+  border-left: 4px solid #ef4444;
+  padding-left: 12px;
+}
+
+.recent-alert-warning {
+  border-left: 4px solid #f59e0b;
+  padding-left: 12px;
+}
+
+.recent-alert-info {
+  border-left: 4px solid #3b82f6;
+  padding-left: 12px;
+}
+
+.staff-inventory-page .admin-inventory-heading,
+.admin-inventory-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.staff-inventory-page .admin-inventory-toolbar,
+.admin-inventory-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 18px;
+}
+
+.admin-inventory-search {
+  flex: 1;
+  min-width: 220px;
+}
+
+.admin-inventory-filter {
+  width: 190px;
+  flex: 0 0 190px;
+}
+
+.admin-inventory-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-sort-button {
+  width: auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  text-transform: inherit;
+}
+
+.admin-sort-button:hover {
+  background: transparent;
+}
+
+.admin-sort-button::after {
+  content: "";
+  display: inline-block;
+  width: 12px;
+}
+
+.admin-sort-button.active.asc::after {
+  content: " ^";
+}
+
+.admin-sort-button.active.desc::after {
+  content: " v";
+}
+
+.admin-status-list,
+.staff-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-status-badge.in-stock {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.admin-status-badge.low-stock,
+.admin-status-badge.reorder-needed {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.admin-status-badge.expiring-soon {
+  background: #fefce8;
+  color: #a16207;
+}
+
+.admin-status-badge.expired {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.admin-row-actions {
+  white-space: nowrap;
+}
+
+.admin-row-actions .action-link {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.alerts-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.alert-category-card {
+  padding: 24px;
+}
+
+.full-alert-section {
+  grid-column: 1 / -1;
+}
+
+.alert-section-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 18px;
+}
+
+.alert-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-right: 8px;
+}
+
+.alert-dot.info {
+  background: #3b82f6;
+}
+
+.alert-dot.warning {
+  background: #f59e0b;
+}
+
+.alert-dot.danger {
+  background: #ef4444;
+}
+
+@media (max-width: 900px) {
+  .staff-inventory-page .admin-inventory-heading,
+  .staff-inventory-page .admin-inventory-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .staff-add-product-btn,
+  .admin-inventory-filter {
+    width: 100%;
+  }
+
+  .alerts-section-grid,
+  .two-panels {
+    grid-template-columns: 1fr;
+  }
+}

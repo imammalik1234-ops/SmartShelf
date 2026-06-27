@@ -4,161 +4,116 @@
 {% block title %}Alerts - Smart Shelf{% endblock %}
 
 {% block content %}
-  <h1>Alerts</h1>
-  <p class="subtitle">Monitor low stock and products nearing expiration</p>
+<h1>Alerts</h1>
+<p class="subtitle">Actionable inventory events that need attention</p>
 
-  <div class="stats-grid">
-    <div class="panel stat-card">
-      <div>
-        <h3>Expiring Soon</h3>
-        <strong id="expiringCount">0</strong>
-      </div>
-      <div class="stat-badge orange-badge">!</div>
-    </div>
-
-    <div class="panel stat-card">
-      <div>
-        <h3>Low Stock</h3>
-        <strong id="lowStockCount">0</strong>
-      </div>
-      <div class="stat-badge red-badge">L</div>
-    </div>
-    </div>
-
-
-    <h2 class="alerts-main-title">Active Alerts</h2>
-
-  <div class="alerts-section-grid">
+<div class="alerts-section-grid staff-alerts-section-grid">
   <div class="panel list-panel alert-category-card">
     <h3 class="alert-section-title">Expiring Soon</h3>
-    <div id="expiringList"></div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Current Stock</th>
+          <th>Days Remaining</th>
+          <th>Suggested Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in expiring_items %}
+          <tr>
+            <td>
+              <span class="alert-dot {{ 'danger' if item.days_left <= 2 else 'warning' }}"></span>
+              {{ item.name }}
+            </td>
+            <td>{{ item.quantity }}</td>
+            <td>
+              <span class="status-badge {{ 'danger' if item.days_left <= 2 else 'warning' }}">
+                {{ item.days_left }} day{{ '' if item.days_left == 1 else 's' }}
+              </span>
+            </td>
+            <td>
+              {% if item.days_left <= 1 %}
+                Prioritize sale or remove from shelf.
+              {% elif item.days_left <= 3 %}
+                Move to promotion shelf.
+              {% else %}
+                Monitor and plan promotion if stock remains high.
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="empty">No products expiring soon.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
   <div class="panel list-panel alert-category-card">
     <h3 class="alert-section-title">Low Stock</h3>
-    <div id="lowStockList"></div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Current Stock</th>
+          <th>Reorder Level</th>
+          <th>Suggested Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in low_stock_items %}
+          <tr>
+            <td>
+              <span class="alert-dot warning"></span>
+              {{ item.name }}
+            </td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.reorder_level }}</td>
+            <td>Reorder at least {{ item.suggested_reorder }} unit{{ '' if item.suggested_reorder == 1 else 's' }}.</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="empty">No low stock products.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+
+  <div class="panel list-panel alert-category-card full-alert-section">
+    <h3 class="alert-section-title">Reorder Needed</h3>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Current Stock</th>
+          <th>Reorder Level</th>
+          <th>Suggested Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in reorder_items %}
+          <tr>
+            <td>
+              <span class="alert-dot info"></span>
+              {{ item.name }}
+            </td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.reorder_level }}</td>
+            <td>Order {{ item.suggested_reorder }} unit{{ '' if item.suggested_reorder == 1 else 's' }} from {{ item.supplier or 'supplier' }}.</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="empty">No reorder action needed.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-
-  <style>
-    .alerts-main-title{
-    font-size: 24px;
-    font-weight: 800;
-    color: #111827;
-    margin: 40px 0 20px 0;
-}
-
-    .alert-section-title{
-    font-size: 36px;
-    font-weight: 800;
-    color: #111827;
-    margin: 30px 0 15px 0;
-}
-    .section-empty {
-      color: #6b7280;
-      padding: 14px 0;
-      font-weight: 600;
-    }
-
-    .stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    }
-
-    .alerts-section-grid {
-     display: grid;
-     grid-template-columns: 1fr 1fr;
-     gap: 24px;
-     }
-
-    .alert-category-card {
-    padding: 24px;
-    }
-
-    .alert-section-title {
-    font-size: 26px;
-    font-weight: 800;
-    color: #111827;
-    margin: 0 0 20px 0;
-    }
-  </style>
-{% endblock %}
-
-{% block scripts %}
-<script>
-  const API_URL = "";
-
-  function extractDaysLeft(message) {
-    const match = message.match(/Days left:\s*(-?\d+)/i);
-    return match ? Number(match[1]) : null;
-  }
-
-  function createAlertRow(alert) {
-    const daysLeft = extractDaysLeft(alert.message);
-
-    const row = document.createElement("div");
-    row.className = "list-row";
-
-    row.innerHTML = `
-      <div>
-        <div class="item-title">${alert.product_name || "Product"}</div>
-        <div class="item-meta">${alert.message}</div>
-      </div>
-
-      <div class="item-side ${alert.alert_type !== "EXPIRY" || daysLeft <= 2 ? "danger-text" : ""}">
-        ${
-          alert.alert_type === "LOW_STOCK"
-          ? "Low stock"
-          : daysLeft + " days"
-        }
-      </div>
-    `;
-
-    return row;
-  }
-  
-  async function loadAlerts() {
-    const response = await fetch(`${API_URL}/alerts`);
-    const alerts = await response.json();
-
-    const activeAlerts = alerts.filter(alert => alert.status === "active");
-
-    const expiryAlerts = activeAlerts.filter(alert => alert.alert_type === "EXPIRY");
-    const expiringSoon = expiryAlerts.filter(alert => extractDaysLeft(alert.message) >= 0);
-
-    const lowStockAlerts = activeAlerts.filter(alert => alert.alert_type === "LOW_STOCK");
-    
-
-    document.getElementById("expiringCount").textContent = expiringSoon.length;
-    document.getElementById("lowStockCount").textContent = lowStockAlerts.length;
-    
-
-    const expiringList = document.getElementById("expiringList");
-    
-    const lowStockList = document.getElementById("lowStockList");
-
-    expiringList.innerHTML = "";
-    
-    lowStockList.innerHTML = "";
-
-    if (expiringSoon.length === 0) {
-      expiringList.innerHTML = `<div class="section-empty">No expiring products.</div>`;
-    } else {
-      expiringSoon.forEach(alert => {
-        expiringList.appendChild(createAlertRow(alert));
-      });
-    }
-
-    
-
-    if (lowStockAlerts.length === 0) {
-      lowStockList.innerHTML = `<div class="section-empty">No low stock products.</div>`;
-    } else {
-      lowStockAlerts.forEach(alert => {
-        lowStockList.appendChild(createAlertRow(alert));
-      });
-    }
-  }
-
-  loadAlerts();
-</script>
+</div>
 {% endblock %}

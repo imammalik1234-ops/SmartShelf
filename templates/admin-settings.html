@@ -1,96 +1,64 @@
 {% extends "admin-base.html" %}
+{% set active_page = "settings" %}
 
 {% block content %}
 
 <div style="max-width: 700px; width: 100%;">
-    <h1 class="page-title">Settings</h1>
-    <p style="color: #6b7280; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">Manage your account and application preferences</p>
+  <h1 class="page-title">Settings</h1>
+  <p style="color: #6b7280; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">Manage your account and export inventory data</p>
 </div>
 
 {% if success_message %}
-<div class="recommendation-box" style="max-width: 700px; width: 100%; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-    ✅ {{ success_message }}
-</div>
+  <div class="recommendation-box" style="max-width: 700px; width: 100%; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+    {{ success_message }}
+  </div>
 {% endif %}
 
 {% if error_message %}
-<div class="recommendation-box" style="max-width: 700px; width: 100%; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fef2f2; border-color: #fecaca; color: #b91c1c;">
-    ⚠️ {{ error_message }}
-</div>
+  <div class="recommendation-box" style="max-width: 700px; width: 100%; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fef2f2; border-color: #fecaca; color: #b91c1c;">
+    {{ error_message }}
+  </div>
 {% endif %}
 
 <div class="admin-panels" style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 700px; width: 100%;">
+  <div class="card" style="padding: 1.5rem;">
+    <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;">Profile Settings</h3>
+    <br>
+    <form action="/admin-settings" method="POST" class="quick-actions" style="display: flex; flex-direction: column; gap: 1.25rem; border: none; padding: 0;">
+      <input type="hidden" name="action" value="update_profile">
 
-    <div class="card" style="padding: 1.5rem;">
-        <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;"><span style="font-size: 1.2rem;">👤</span> Profile Settings</h3>
-        <br>
-        <form action="/admin-settings" method="POST" class="quick-actions" style="display: flex; flex-direction: column; gap: 1.25rem; border: none; padding: 0;">
-            <input type="hidden" name="action" value="update_profile">
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div>
-                    <label style="display: block; font-weight: 500; margin-bottom: 0.4rem; font-size: 0.85rem; color: #374151;">Full Name</label>
-                    <input type="text" name="name" value="{{ profile_name }}" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem;">
-                </div>
-                <div>
-                    <label style="display: block; font-weight: 500; margin-bottom: 0.4rem; font-size: 0.85rem; color: #374151;">Email</label>
-                    <input type="email" name="email" value="{{ profile_email }}" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem;">
-                </div>
-            </div>
-            
-            <button type="submit" style="background: #1d4ed8; color: white; border: none; padding: 0.65rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; width: fit-content; font-size: 0.9rem;">
-                Save Changes
-            </button>
-        </form>
-    </div>
-
-    <div class="card" style="padding: 1.5rem;">
-        <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;"><span style="font-size: 1.2rem;">🔔</span> Notification Preferences</h3>
-        <br>
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-            <label style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #111827; cursor: pointer;">
-                <input type="checkbox" checked style="width: 1.05rem; height: 1.05rem; accent-color: #1d4ed8;">
-                Email alerts for expiring products
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #111827; cursor: pointer;">
-                <input type="checkbox" checked style="width: 1.05rem; height: 1.05rem; accent-color: #1d4ed8;">
-                Low stock notifications
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #111827; cursor: pointer;">
-                <input type="checkbox" style="width: 1.05rem; height: 1.05rem; accent-color: #1d4ed8;">
-                Daily inventory reports
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #111827; cursor: pointer;">
-                <input type="checkbox" checked style="width: 1.05rem; height: 1.05rem; accent-color: #1d4ed8;">
-                AI prediction updates
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #111827; cursor: pointer;">
-                <input type="checkbox" checked style="width: 1.05rem; height: 1.05rem; accent-color: #1d4ed8;">
-                Weekly performance summary
-            </label>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label style="display: block; font-weight: 500; margin-bottom: 0.4rem; font-size: 0.85rem; color: #374151;">Full Name</label>
+          <input type="text" name="name" value="{{ profile_name }}" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem;">
         </div>
-    </div>
-
-    <div class="card" style="padding: 1.5rem;">
-        <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;"><span style="font-size: 1.2rem;">💾</span> Data Management</h3>
-        <br>
-        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid #f1f5f9; border-radius: 8px; background: #fafafa;">
-                <div>
-                    <strong style="font-size: 0.95rem; color: #111827;">Export All Data</strong>
-                    <div style="font-size: 0.85rem; color: #6b7280; margin-top: 0.15rem;">Download your complete inventory data as CSV</div>
-                </div>
-                <a href="/admin-settings/export-data" class="btn" style="background: white; color: #111827; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    Export
-                </a>
-            </div>
+        <div>
+          <label style="display: block; font-weight: 500; margin-bottom: 0.4rem; font-size: 0.85rem; color: #374151;">Email</label>
+          <input type="email" name="email" value="{{ profile_email }}" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem;">
         </div>
-    </div>
+      </div>
 
+      <button type="submit" style="background: #1d4ed8; color: white; border: none; padding: 0.65rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; width: fit-content; font-size: 0.9rem;">
+        Save Changes
+      </button>
+    </form>
+  </div>
+
+  <div class="card" style="padding: 1.5rem;">
+    <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;">Data Management</h3>
+    <br>
+    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid #f1f5f9; border-radius: 8px; background: #fafafa;">
+        <div>
+          <strong style="font-size: 0.95rem; color: #111827;">Export Inventory Data</strong>
+          <div style="font-size: 0.85rem; color: #6b7280; margin-top: 0.15rem;">Download current inventory data as CSV</div>
+        </div>
+        <a href="/admin-settings/export-data" class="btn" style="background: white; color: #111827; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+          Export
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 
 {% endblock %}

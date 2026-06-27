@@ -12,6 +12,14 @@
     </div>
 
     <div class="admin-panel">
+        {% if errors %}
+        <div class="message error validation-summary">
+            {% for error in errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <form method="POST" class="admin-edit-form">
             <div class="admin-form-grid">
                 <div class="admin-form-group">

@@ -1,131 +1,189 @@
 {% extends "admin-base.html" %}
+{% set active_page = "dashboard" %}
+
+{% block title %}Admin Dashboard - Smart Shelf{% endblock %}
 
 {% block content %}
+<div class="admin-dashboard-page compact-dashboard admin-recovery-dashboard">
+  <div class="dashboard-header-row">
+    <div>
+      <h1 class="dashboard-title">Admin Dashboard</h1>
+      <p class="dashboard-subtitle">Inventory actions, alerts, and product movement</p>
+    </div>
+  </div>
 
-<h2 class="page-title">Admin Dashboard</h2>
+  <div class="admin-stats-grid admin-stats-grid-2">
+    <a href="/admin-alerts" class="admin-stat-card admin-stat-card-warning">
+      <div class="admin-stat-label">Expiring Soon</div>
+      <div class="admin-stat-value">{{ stats.expiring }}</div>
+    </a>
 
-<!-- ===== STATS ===== -->
-<div class="stats-grid">
+    <a href="/admin-inventory?filter=Reorder Needed" class="admin-stat-card admin-stat-card-primary">
+      <div class="admin-stat-label">Reorder Needed</div>
+      <div class="admin-stat-value">{{ stats.reorder_needed }}</div>
+    </a>
+  </div>
 
-  <a href="/inventory-page" class="card stat-card">
-   <div class="stat-title">📦 Total Products</div>
-    <strong>{{ stats.total_products }}</strong>
-  </a>
+  <div class="admin-dashboard-grid">
+    <div class="admin-panel compact-panel">
+      <div class="admin-panel-header">
+        <h2>Top Selling Items</h2>
+      </div>
 
-  <a href="/inventory-page?filter=low" class="card stat-card">
-    <div class="stat-title">⚠️ Low Stock</div>
-    <strong>{{ stats.low_stock }}</strong>
-  </a>
+      <div class="admin-list">
+        {% for item in top_selling %}
+          <div class="admin-list-row">
+            <div class="admin-list-main">
+              <div class="admin-list-title">{{ item.name }}</div>
+              <div class="admin-list-subtitle">{{ item.category }}</div>
+            </div>
+            <div class="admin-list-meta">
+              <span class="admin-badge badge-success">{{ item.sold }} sold</span>
+            </div>
+          </div>
+        {% else %}
+          <div class="admin-empty-state">No sales recorded yet.</div>
+        {% endfor %}
+      </div>
+    </div>
 
-  <a href="/expiry-alerts" class="card stat-card">
-   <div class="stat-title">⏳ Expiring Soon</div>
-    <strong>{{ stats.expiring }}</strong>
-  </a>
+    <div class="admin-panel compact-panel recent-alerts-panel">
+      <div class="admin-panel-header admin-panel-header-action">
+        <h2>Recent Alerts</h2>
+        <a href="/admin-alerts" class="admin-view-all-link">View All Alerts</a>
+      </div>
 
- <a href="/sales" class="stat-card">
-   <div class="stat-title">💰 Total Sales</div>
-    <div class="stat-value">RM {{ stats.total_sales }}</div>
-</a>
+      <div class="admin-list">
+        {% for alert in recent_alerts %}
+          <div class="admin-list-row recent-alert-row recent-alert-{{ alert.priority }}">
+            <div class="admin-list-main">
+              <div class="admin-list-title">{{ alert.product_name }}</div>
+              <div class="admin-list-subtitle">{{ alert.alert_type }}</div>
+            </div>
+            <div class="admin-list-meta">
+              <span class="admin-badge badge-{{ alert.priority }}">{{ alert.detail }}</span>
+            </div>
+          </div>
+        {% else %}
+          <div class="admin-empty-state">No recent alerts.</div>
+        {% endfor %}
+      </div>
+    </div>
 
+    <div class="admin-panel compact-panel full-dashboard-panel">
+      <div class="admin-panel-header">
+        <h2>Reorder Needed</h2>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Stock</th>
+            <th>Reorder Level</th>
+            <th>Suggested</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in reorder_items %}
+            <tr>
+              <td>{{ item.name }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.reorder_level }}</td>
+              <td>{{ item.suggested_reorder }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4" class="empty">No reorder needed.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-<div class="admin-panels">
+<style>
+  .admin-recovery-dashboard .admin-stats-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-  <div class="card">
-   <h3>⚡ Quick Actions</h3>
-    <div class="quick-actions">
-      <a href="/add-product">➕ Add Product</a>
-      <a href="/inventory-page">📦 View Inventory</a>
-      <a href="/record-sale">💰 Record Sale</a>
-      <a href="/expiry-alerts">⚠️ View Alerts</a>
-    </div>
-  </div>
+  .admin-recovery-dashboard .admin-stat-card {
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
 
-  <div class="card">
-    <h3>📊 Sales Insight</h3>
-    <p>📈 Sales increased by 12% compared to yesterday</p>
-    <p>💰 Peak sales time: 6PM – 8PM</p>
-  </div>
+  .admin-recovery-dashboard .admin-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(79, 99, 246, 0.14);
+  }
 
-  <div class="card">
-    <h3>🖥️ System Status</h3>
-    <p>🟢 Inventory system running</p>
-    <p>🟢 Alerts active</p>
-    <p>🟢 Database connected</p>
-  </div>
+  .admin-stat-card-warning {
+    border-color: #fde68a;
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  }
 
-</div>
-<!-- ===== ALERTS + TOP SELLING ===== -->
-<div class="grid-2">
+  .admin-stat-card-warning .admin-stat-value {
+    color: #b45309;
+  }
 
-  <!-- ALERTS -->
-  <div class="card">
-    <h3>Alerts</h3>
+  .admin-stat-card-primary {
+    border-color: #c7d2fe;
+    background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
+  }
 
-    <div class="list-row">
-      <span>⚠️ Low Stock</span>
-      <span>{{ alerts.low_stock }}</span>
-    </div>
+  .admin-stat-card-primary .admin-stat-value {
+    color: #4f63f6;
+  }
 
-    <div class="list-row">
-      <span>⏳ Expiring Soon</span>
-      <span>{{ alerts.expiring }}</span>
-    </div>
+  .admin-panel-header-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
 
-    <div class="list-row">
-      <span>❌ Expired</span>
-      <span>{{ alerts.expired }}</span>
-    </div>
-  </div>
+  .admin-view-all-link {
+    color: #4f63f6;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+  }
 
-  <!-- TOP SELLING -->
-  <div class="card">
-    <h3>Top Selling Items</h3>
+  .admin-view-all-link:hover {
+    color: #4052d6;
+  }
 
-    {% for item in top_selling %}
-    <div class="list-row">
-      <span>
-        {% if item.name == "Milk" %}🥛{% endif %}
-        {% if item.name == "Bread" %}🍞{% endif %}
-        {% if item.name == "Juice" %}🧃{% endif %}
-        {% if item.name == "Rice" %}🍚{% endif %}
-        {% if item.name == "Eggs" %}🥚{% endif %}
-        {% if item.name == "Yogurt" %}🥣{% endif %}
-        {{ item.name }}
-      </span>
-      <span>{{ item.sold }} sold</span>
-    </div>
-    {% endfor %}
+  .full-dashboard-panel {
+    grid-column: 1 / -1;
+  }
 
-  </div>
+  .recent-alert-row {
+    border-left: 4px solid #c7d2fe;
+    padding-left: 12px;
+  }
 
-</div>
+  .recent-alert-warning {
+    border-left-color: #f59e0b;
+  }
 
-<!-- ===== REORDER ===== -->
-<div class="card">
-  <h3>Reorder Needed</h3>
+  .recent-alert-danger {
+    border-left-color: #dc2626;
+  }
 
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Stock</th>
-        <th>Reorder Level</th>
-        <th>Suggested</th>
-      </tr>
-    </thead>
+  .recent-alert-info {
+    border-left-color: #4f63f6;
+  }
 
-    <tbody>
-      {% for item in reorder_items %}
-      <tr>
-        <td>{{ item.name }}</td>
-        <td>{{ item.stock }}</td>
-        <td>{{ item.reorder_level }}</td>
-        <td>{{ item.suggested }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  .badge-info {
+    background: #eef2ff;
+    color: #4f63f6;
+  }
 
+  @media (max-width: 900px) {
+    .admin-recovery-dashboard .admin-stats-grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
 {% endblock %}

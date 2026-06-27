@@ -4,37 +4,79 @@
 {% block title %}Inventory - Smart Shelf{% endblock %}
 
 {% block content %}
-  <h1>Inventory</h1>
-  <p class="subtitle">Track product quantities, suppliers, prices, and expiry dates</p>
+<div class="staff-inventory-page">
+  <div class="admin-inventory-heading">
+    <div>
+      <h1>Inventory</h1>
+      <p class="subtitle">Track product quantities, suppliers, prices, and expiry dates</p>
+    </div>
+    <a href="/add-product" class="staff-add-product-btn">Add Product</a>
+  </div>
 
-  <div class="panel table-panel">
-    <table>
+  <div class="admin-inventory-toolbar">
+    <input
+      type="search"
+      id="inventorySearch"
+      class="admin-inventory-search"
+      placeholder="Search inventory..."
+      aria-label="Search inventory"
+    >
+
+    <select id="inventoryFilter" class="admin-inventory-filter" aria-label="Filter inventory status">
+      <option value="all">All statuses</option>
+      <option value="In Stock">In Stock</option>
+      <option value="Low Stock">Low Stock</option>
+      <option value="Expiring Soon">Expiring Soon</option>
+      <option value="Expired">Expired</option>
+      <option value="Reorder Needed">Reorder Needed</option>
+    </select>
+  </div>
+
+  <div class="panel table-panel admin-inventory-table-wrap">
+    <table id="inventoryTable">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Supplier</th>
-          <th>Quantity</th>
-          <th>Status</th>
-          <th>Price</th>
-          <th>Expiry</th>
+          <th><button type="button" class="admin-sort-button" data-sort="id">ID</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="name">Name</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="category">Category</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="supplier">Supplier</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="quantity">Quantity</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="status">Status</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="price">Price</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="expiry">Expiry</button></th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for product in products %}
-          <tr>
+          <tr
+            data-id="{{ product.product_id }}"
+            data-name="{{ product.name|lower }}"
+            data-category="{{ product.category|lower }}"
+            data-supplier="{{ product.supplier|lower }}"
+            data-quantity="{{ product.quantity }}"
+            data-status="{{ product.status_filter|lower }}"
+            data-price="{{ product.unit_price }}"
+            data-expiry="{{ product.expiry_date_display }}"
+          >
             <td>{{ product.product_id }}</td>
             <td>{{ product.name }}</td>
             <td>{{ product.category }}</td>
             <td>{{ product.supplier }}</td>
             <td>{{ product.quantity }}</td>
-            <td class="{{ 'danger-text' if product.stock_status != 'In Stock' else 'ok-text' }}">{{ product.stock_status }}</td>
-            <td>${{ product.unit_price }}</td>
-            <td>{{ product.expiry_date }}</td>
             <td>
-              <div class="row-actions">
+              <div class="admin-status-list staff-status-list">
+                {% for status in product.status_labels %}
+                  <span class="admin-status-badge staff-status-badge {{ status|lower|replace(' ', '-') }}">
+                    {{ status }}
+                  </span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>${{ "%.2f"|format(product.unit_price) }}</td>
+            <td>{{ product.expiry_date_display or "-" }}</td>
+            <td>
+              <div class="row-actions admin-row-actions staff-row-actions">
                 <a class="action-link edit-link" href="/edit-product/{{ product.product_id }}">Edit</a>
                 <form method="POST" action="/remove-stock/{{ product.product_id }}">
                   <input class="stock-adjust-input" type="number" name="quantity_to_remove" min="1" max="{{ product.quantity }}" placeholder="Qty" required>
@@ -47,11 +89,124 @@
             </td>
           </tr>
         {% else %}
-          <tr>
+          <tr class="admin-empty-row">
             <td colspan="9" class="empty">No inventory items found.</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+</div>
+
+<style>
+  .staff-add-product-btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: #16a34a;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .staff-add-product-btn:hover {
+    background: #15803d;
+  }
+
+  .staff-inventory-page input:focus,
+  .staff-inventory-page select:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px #dcfce7;
+  }
+
+  .staff-status-badge.low-stock,
+  .staff-status-badge.reorder-needed {
+    background: #ecfdf5;
+    color: #15803d;
+  }
+
+  .staff-row-actions .edit-link {
+    color: #15803d;
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const searchInput = document.getElementById("inventorySearch");
+  const filterSelect = document.getElementById("inventoryFilter");
+  const tableBody = document.querySelector("#inventoryTable tbody");
+  const rows = Array.from(tableBody.querySelectorAll("tr[data-id]"));
+  const urlFilter = new URLSearchParams(window.location.search).get("filter");
+  let currentSort = { key: "", direction: "asc" };
+
+  if (urlFilter && Array.from(filterSelect.options).some(option => option.value === urlFilter)) {
+    filterSelect.value = urlFilter;
+  }
+
+  function rowMatches(row) {
+    const query = searchInput.value.trim().toLowerCase();
+    const filter = filterSelect.value.toLowerCase();
+    const searchable = [
+      row.dataset.id,
+      row.dataset.name,
+      row.dataset.category,
+      row.dataset.supplier,
+      row.dataset.status,
+      row.dataset.expiry
+    ].join(" ");
+
+    return (!query || searchable.includes(query)) &&
+      (filter === "all" || row.dataset.status.includes(filter));
+  }
+
+  function applyFilters() {
+    rows.forEach(row => {
+      row.hidden = !rowMatches(row);
+    });
+  }
+
+  function sortValue(row, key) {
+    if (key === "id" || key === "quantity" || key === "price") {
+      return Number(row.dataset[key]) || 0;
+    }
+
+    return row.dataset[key] || "";
+  }
+
+  function sortRows(key) {
+    const direction = currentSort.key === key && currentSort.direction === "asc" ? "desc" : "asc";
+    currentSort = { key, direction };
+
+    document.querySelectorAll(".admin-sort-button").forEach(button => {
+      button.classList.toggle("active", button.dataset.sort === key);
+      button.classList.toggle("asc", button.dataset.sort === key && direction === "asc");
+      button.classList.toggle("desc", button.dataset.sort === key && direction === "desc");
+    });
+
+    [...rows].sort((leftRow, rightRow) => {
+      const left = sortValue(leftRow, key);
+      const right = sortValue(rightRow, key);
+
+      if (left < right) return direction === "asc" ? -1 : 1;
+      if (left > right) return direction === "asc" ? 1 : -1;
+      return 0;
+    }).forEach(row => tableBody.appendChild(row));
+
+    applyFilters();
+  }
+
+  searchInput.addEventListener("input", applyFilters);
+  filterSelect.addEventListener("change", applyFilters);
+  document.querySelectorAll(".admin-sort-button").forEach(button => {
+    button.addEventListener("click", () => sortRows(button.dataset.sort));
+  });
+
+  applyFilters();
+</script>
 {% endblock %}

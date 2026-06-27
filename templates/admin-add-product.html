@@ -1,14 +1,15 @@
-{% extends "admin-base.html" if is_admin_page else "base.html" %}
-{% set active_page = "inventory" if is_admin_page else "add_product" %}
+{% extends "admin-base.html" %}
+{% set active_page = "inventory" %}
 
 {% block title %}Add Product - Smart Shelf{% endblock %}
 
 {% block content %}
-  <a class="back-link" href="{{ '/admin-inventory' if is_admin_page else '/inventory-page' }}">&lt; Back to Inventory</a>
+<div class="admin-product-form-page">
+  <a class="back-link admin-back-link" href="/admin-inventory">&lt; Back to Inventory</a>
   <h1>Add New Product</h1>
   <p class="subtitle">Enter product details to add to your inventory</p>
 
-  <div class="panel form-panel">
+  <div class="panel form-panel admin-product-form-panel">
     {% if errors %}
       <div class="message error validation-summary">
         {% for error in errors %}
@@ -71,12 +72,37 @@
         </div>
 
         <div class="full actions">
-          <button class="btn btn-primary" type="submit">Save Product</button>
-          <a class="btn btn-secondary" href="{{ '/admin-inventory' if is_admin_page else '/inventory-page' }}">Cancel</a>
+          <button class="btn btn-primary admin-primary-btn" type="submit">Save Product</button>
+          <a class="btn btn-secondary" href="/admin-inventory">Cancel</a>
         </div>
       </div>
     </form>
   </div>
+</div>
+
+<style>
+  .admin-product-form-page .form-panel {
+    box-shadow: 0 4px 18px rgba(79, 99, 246, 0.08);
+  }
+
+  .admin-product-form-page input:focus,
+  .admin-product-form-page select:focus {
+    border-color: #4f63f6;
+    box-shadow: 0 0 0 3px #eef2ff;
+  }
+
+  .admin-back-link {
+    color: #4f63f6;
+  }
+
+  .admin-primary-btn {
+    background: #4f63f6;
+  }
+
+  .admin-primary-btn:hover {
+    background: #4052d6;
+  }
+</style>
 {% endblock %}
 
 {% block scripts %}

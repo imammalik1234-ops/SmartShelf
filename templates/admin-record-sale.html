@@ -39,7 +39,7 @@
 
 </style>
 
-  <a class="back-link" href="/inventory-page">&lt; Back to Inventory</a>
+  <a class="back-link" href="/admin-inventory">&lt; Back to Inventory</a>
   <h1>Record Sale</h1>
   <p class="subtitle">Enter sale details to update inventory and track sales</p>
 
@@ -106,6 +106,13 @@
 
       if (!productId || quantity <= 0) {
         message.textContent = "Please select a product and enter a valid quantity.";
+        message.classList.add("error");
+        return;
+      }
+
+      const selectedItem = inventoryData.find(i => i.product_id === productId);
+      if (selectedItem && quantity > selectedItem.quantity) {
+        message.textContent = "Quantity sold cannot be greater than available stock.";
         message.classList.add("error");
         return;
       }

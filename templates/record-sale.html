@@ -75,6 +75,13 @@
         return;
       }
 
+      const selectedItem = inventoryData.find(i => i.product_id === productId);
+      if (selectedItem && quantity > selectedItem.quantity) {
+        message.textContent = "Quantity sold cannot be greater than available stock.";
+        message.classList.add("error");
+        return;
+      }
+
       const response = await fetch(`${API_URL}/sales`, {
         method: "POST",
         headers: {
