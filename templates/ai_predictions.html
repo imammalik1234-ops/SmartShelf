@@ -16,7 +16,9 @@
           <th>Current Stock</th>
           <th>Predicted Demand</th>
           <th>Recommended Reorder</th>
+          <th>Price</th>
           <th>Status</th>
+          <th>Total Cost</th>
         </tr>
       </thead>
       <tbody>
@@ -26,10 +28,22 @@
     <td>{{ item.current_stock }}</td>
     <td>{{ item.predicted_demand }}</td>
     <td>{{ item.recommended_reorder_qty }}</td>
-    <td class="{{ 'danger-text' if item.status == 'Restock Soon' else 'ok-text' }}">
-        {{ item.status }}
-    </td>
-</tr>
+    <td>RM {{ "%.2f"|format(item.price) }}</td>
+
+    <td>
+    {% if item.status == "High Risk" %}
+        <span style="color:red">High Risk</span>
+    {% elif item.status == "Medium Risk" %}
+        <span style="color:orange">Medium Risk</span>
+    {% elif item.status == "Low Risk" %}
+        <span style="color:green">Low Risk</span>
+    {% else %}
+        <span style="color:gray">Sufficient</span>
+    {% endif %}
+</td>
+
+<td>RM {{ "%.2f"|format(item.total_cost) }}</td>
+  </tr>
 {% else %}
 <tr>
     <td colspan="5" class="empty">No prediction data available.</td>

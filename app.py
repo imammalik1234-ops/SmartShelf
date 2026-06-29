@@ -1,11 +1,12 @@
-from unittest import result
-
 from flask import Flask, request, render_template, redirect, url_for, session
 from flask_cors import CORS
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import date, datetime, timedelta
+from ai_model import get_predictions
+import pandas as pd
+product_info = pd.read_csv("products.csv")
 import os
 import io
 import csv
@@ -245,7 +246,7 @@ def predict_demand_for_product(product_id):
 
 
 def calculate_reorder_qty(predicted_demand, current_stock):
-    reorder_qty = predicted_demand - current_stock
+    reorder_qty = int(predicted_demand * 1.2) - current_stock
     return reorder_qty if reorder_qty > 0 else 0
 
 
@@ -699,13 +700,16 @@ def admin_dashboard():
     check_alerts()
     dashboard_data = admin_dashboard_data()
 
+    predictions = get_predictions()   
+
     return render_template(
         "admin-dashboard.html",
         active_page="dashboard",
         stats=dashboard_data["stats"],
         top_selling=dashboard_data["top_selling"],
         reorder_items=dashboard_data["reorder_items"],
-        recent_alerts=dashboard_data["recent_alerts"]
+        recent_alerts=dashboard_data["recent_alerts"],
+        predictions=predictions,  
     )
 
   
@@ -1373,30 +1377,67 @@ def api_predictions():
 @login_required
 @role_required("admin")
 def ai_predictions():
+    ai_data = get_predictions()
+
     predictions = []
 
-    for product in Product.query.all():
-        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
-        current_stock = inventory.quantity if inventory else 0
+    for item in ai_data:
+        product_name = item["name"]
+        predicted = item["predicted"]
 
-        predicted_demand = predict_demand_for_product(product.product_id)
-        reorder_qty = calculate_reorder_qty(predicted_demand, current_stock)
+        # ✅ Get price from products.csv
+        price_row = product_info[
+            product_info["Product"].str.contains(product_name, case=False, na=False)
+        ]
 
-        status = "Restock Soon" if reorder_qty > 0 else "Sufficient"
+        if not price_row.empty:
+            price = float(price_row.iloc[0]["Unit Price (RM)"])
+        else:
+            price = 0
 
+        # ✅ Try to find product in DB
+        product = Product.query.filter(
+            db.func.lower(Product.name).like(f"%{product_name.lower()}%")
+        ).first()
+
+        # ✅ Step 3 FIX (DO NOT SKIP PRODUCTS)
+        if not product:
+            current_stock = 0
+        else:
+            inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+            current_stock = inventory.quantity if inventory else 0
+
+        # ✅ Reorder logic
+        reorder_qty = calculate_reorder_qty(predicted, current_stock)
+
+        # ✅ Status logic
+        if reorder_qty > 100:
+            status = "High Risk"
+        elif reorder_qty > 30:
+            status = "Medium Risk"
+        elif reorder_qty > 0:
+            status = "Low Risk"
+        else:
+            status = "Sufficient"
+
+        # ✅ Total cost
+        total_cost = round(reorder_qty * price, 2)
+
+        # ✅ Append result
         predictions.append({
-            "product_name": product.name,
+            "product_name": product_name,
             "current_stock": current_stock,
-            "predicted_demand": predicted_demand,
+            "predicted_demand": predicted,
             "recommended_reorder_qty": reorder_qty,
-            "status": status   
+            "price": price,
+            "status": status,
+            "total_cost": total_cost
         })
 
-    return render_template(
-    "ai_predictions.html",
-    predictions=predictions,
-    active_page="ai"   
-)
+    # ✅ Sort by highest reorder needed
+    predictions = sorted(predictions, key=lambda x: x["recommended_reorder_qty"], reverse=True)
+
+    return render_template("ai_predictions.html", predictions=predictions)
 
 @app.route("/admin-settings", methods=["GET", "POST"])
 @login_required
