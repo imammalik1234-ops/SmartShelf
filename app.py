@@ -1395,12 +1395,10 @@ def ai_predictions():
         else:
             price = 0
 
-        # ✅ Try to find product in DB
         product = Product.query.filter(
             db.func.lower(Product.name).like(f"%{product_name.lower()}%")
         ).first()
 
-        # ✅ Step 3 FIX (DO NOT SKIP PRODUCTS)
         if not product:
             current_stock = 0
         else:
@@ -1420,20 +1418,17 @@ def ai_predictions():
         else:
             status = "Sufficient"
 
-        # ✅ Total cost
         total_cost = round(reorder_qty * price, 2)
 
-        # ✅ Append result
         predictions.append({
-            "product_name": product_name,
-            "current_stock": current_stock,
-            "predicted_demand": predicted,
-            "recommended_reorder_qty": reorder_qty,
-            "price": price,
-            "status": status,
-            "total_cost": total_cost
-        })
-
+        "product_name": item["name"].split(" (")[0],
+        "current_stock": current_stock,
+        "predicted_demand": predicted,
+        "recommended_reorder_qty": reorder_qty,
+        "price": price,
+        "status": status,
+        "total_cost": total_cost
+    })
     # ✅ Sort by highest reorder needed
     predictions = sorted(predictions, key=lambda x: x["recommended_reorder_qty"], reverse=True)
 

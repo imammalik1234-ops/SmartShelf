@@ -5,12 +5,12 @@ from sklearn.linear_model import LinearRegression
 def get_predictions():
     # Load your actual sales data
     df = pd.read_csv("sales_data.csv")
+    df["product_variant"] = df["product"] + " (" + df["variant"] + ")"
     df["date"] = pd.to_datetime(df["date"], dayfirst=True)
 
     predictions = []
 
-    # Group by product (your column is 'product')
-    grouped = df.groupby("product")
+    grouped = df.groupby("product_variant")
 
     for product, group in grouped:
         # Sort by date
@@ -22,15 +22,12 @@ def get_predictions():
         # y = quantity sold
         y = group["quantity_sold"].values
 
-        # Skip small data
         if len(y) < 2:
             continue
 
-        # Train model
         model = LinearRegression()
         model.fit(X, y)
 
-        # Predict next value
         future_step = np.array([[len(group)]])
         predicted = model.predict(future_step)[0]
 
@@ -39,13 +36,11 @@ def get_predictions():
             "predicted": int(max(predicted, 0))
         })
 
-    # Sort highest demand first
     predictions = sorted(predictions, key=lambda x: x["predicted"], reverse=True)
 
     return predictions
 
 
-# Test run
 if __name__ == "__main__":
     result = get_predictions()
     for item in result:
