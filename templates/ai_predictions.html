@@ -24,7 +24,12 @@
       <tbody>
         {% for item in predictions %}
 <tr>
-    <td>{{ item.product_name }}</td>
+   <td>
+  {{ item.product_name }}
+  {% if item.variant %}
+    ({{ item.variant }})
+  {% endif %}
+</td>
     <td>{{ item.current_stock }}</td>
     <td>{{ item.predicted_demand }}</td>
     <td>{{ item.recommended_reorder_qty }}</td>

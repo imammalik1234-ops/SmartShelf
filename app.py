@@ -1,10 +1,10 @@
 from flask import Flask, request, render_template, redirect, url_for, session
+from ai_model import get_predictions
 from flask_cors import CORS
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import date, datetime, timedelta
-from ai_model import get_predictions
 import pandas as pd
 product_info = pd.read_csv("products.csv")
 import os
@@ -1374,44 +1374,46 @@ def api_predictions():
 
 
 @app.route("/ai-predictions")
-@login_required
-@role_required("admin")
 def ai_predictions():
     ai_data = get_predictions()
-
     predictions = []
 
     for item in ai_data:
-        product_name = item["name"]
+        full_name = item["name"]
+
+        if "(" in full_name:
+            base_name = full_name.split(" (")[0].strip()
+            variant = full_name.split(" (")[1].replace(")", "").strip()
+        else:
+            base_name = full_name.strip()
+            variant = ""
+
         predicted = item["predicted"]
 
-        # ✅ Get price from products.csv
+        product = Product.query.filter(
+            db.func.lower(Product.name).like(f"%{base_name.lower()}%")
+        ).first()
+
+        price = 0
         price_row = product_info[
-            product_info["Product"].str.contains(product_name, case=False, na=False)
+            (product_info["Product"].str.lower().str.strip() == base_name.lower()) &
+            (product_info["Variant"].str.lower().str.strip() == variant.lower())
         ]
 
         if not price_row.empty:
             price = float(price_row.iloc[0]["Unit Price (RM)"])
-        else:
-            price = 0
 
-        product = Product.query.filter(
-            db.func.lower(Product.name).like(f"%{product_name.lower()}%")
-        ).first()
-
-        if not product:
-            current_stock = 0
-        else:
+        if product:
             inventory = Inventory.query.filter_by(product_id=product.product_id).first()
             current_stock = inventory.quantity if inventory else 0
+        else:
+            current_stock = 0
 
-        # ✅ Reorder logic
         reorder_qty = calculate_reorder_qty(predicted, current_stock)
 
-        # ✅ Status logic
-        if reorder_qty > 100:
+        if reorder_qty > 50:
             status = "High Risk"
-        elif reorder_qty > 30:
+        elif reorder_qty > 10:
             status = "Medium Risk"
         elif reorder_qty > 0:
             status = "Low Risk"
@@ -1421,16 +1423,21 @@ def ai_predictions():
         total_cost = round(reorder_qty * price, 2)
 
         predictions.append({
-        "product_name": item["name"].split(" (")[0],
-        "current_stock": current_stock,
-        "predicted_demand": predicted,
-        "recommended_reorder_qty": reorder_qty,
-        "price": price,
-        "status": status,
-        "total_cost": total_cost
-    })
-    # ✅ Sort by highest reorder needed
-    predictions = sorted(predictions, key=lambda x: x["recommended_reorder_qty"], reverse=True)
+            "product_name": base_name,
+            "variant": variant,
+            "current_stock": current_stock,
+            "predicted_demand": predicted,
+            "recommended_reorder_qty": reorder_qty,
+            "price": price,
+            "status": status,
+            "total_cost": total_cost
+        })
+
+    predictions = sorted(
+        predictions,
+        key=lambda x: x["recommended_reorder_qty"],
+        reverse=True
+    )
 
     return render_template("ai_predictions.html", predictions=predictions)
 
