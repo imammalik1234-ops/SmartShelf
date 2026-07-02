@@ -55,16 +55,7 @@ CREATE TABLE predictions (
 );
 
 
-INSERT INTO products (name, category, supplier, unit_price, expiry_date, reorder_level)
-VALUES ('Milk', 'Dairy', 'Nestle', 3.50, '2026-07-01', 10);
-USE smartshelf_db;
 
-INSERT INTO inventory (product_id, quantity)
-VALUES (1, 50);
-
-UPDATE products
-SET expiry_date = '2026-05-26'
-WHERE product_id = 1;
 
 -- Admin account
 INSERT INTO users (name, email, password_hash, role)
