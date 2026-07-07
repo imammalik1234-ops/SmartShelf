@@ -92,7 +92,7 @@
     <main class="main">
       <header class="topbar">
   <div class="search">
-    {% if active_page not in ["dashboard", "inventory"] %}
+    {% if active_page not in ["dashboard", "inventory", "alerts", "record_sale",] %}
         <span class="search-icon"></span>
         <input type="text" placeholder="{% block search_placeholder %}Search inventory...{% endblock %}">
     {% endif %}
