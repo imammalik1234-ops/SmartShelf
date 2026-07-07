@@ -5,6 +5,10 @@ from flask_login import LoginManager, current_user, login_required, login_user, 
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import date, datetime, timedelta
+from sqlalchemy import func
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import numpy as np
 import pandas as pd
 product_info = pd.read_csv("products.csv")
 import os
@@ -371,6 +375,50 @@ def render_product_form(template_name, **context):
     context.setdefault("today", date.today().isoformat())
     return render_template(template_name, **context)
 
+def get_product_movement_clusters():
+    """
+    Analyzes live sales distribution records across all active rows
+    to tag items as 'Fast-Moving', 'Stable', or 'Slow-Moving' via K-Means.
+    """
+    try:
+        products = Product.query.all()
+        if len(products) < 3:
+            return {p.product_id: "Stable" for p in products}
+
+        data_points = []
+        product_ids = []
+
+        for p in products:
+            total_sales = db.session.query(db.func.sum(Sale.quantity)).filter(Sale.product_id == p.product_id).scalar() or 0
+            price = float(p.unit_price) if p.unit_price else 0.0
+            
+            data_points.append([total_sales, price])
+            product_ids.append(p.product_id)
+
+        X = np.array(data_points)
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        kmeans = KMeans(n_clusters=3, init="k-means++", random_state=42, n_init="auto")
+        labels = kmeans.fit_predict(X_scaled)
+
+        cluster_averages = []
+        for c_id in range(3):
+            sales_in_cluster = [X[i][0] for i in range(len(labels)) if labels[i] == c_id]
+            avg_sales = np.mean(sales_in_cluster) if sales_in_cluster else 0
+            cluster_averages.append((c_id, avg_sales))
+        
+        cluster_averages.sort(key=lambda x: x[1])
+        
+        rank_mapping = {
+            cluster_averages[0][0]: "Slow-Moving", 
+            cluster_averages[1][0]: "Stable", 
+            cluster_averages[2][0]: "Fast-Moving"
+        }
+
+        return {product_ids[i]: rank_mapping[labels[i]] for i in range(len(product_ids))}
+    except Exception:
+        return {}
 
 def product_inventory_summary(product):
     inventory = inventory_for_product(product.product_id)
@@ -387,44 +435,48 @@ def product_inventory_summary(product):
         elif days_left <= 7:
             status_labels.append("Expiring Soon")
 
-    if reorder_needed:
-        status_labels.extend(["Low Stock", "Reorder Needed"])
+    if reorder_needed: 
+        status_labels.extend(["Low Stock", "Reorder Needed"]) 
 
-    if not status_labels:
-        status_labels.append("In Stock")
+    if not status_labels: 
+        status_labels.append("In Stock") 
 
-    predicted_demand = predict_demand_for_product(product.product_id)
-    suggested_reorder = 0
-    if reorder_needed:
-        suggested_reorder = max(
-            calculate_reorder_qty(predicted_demand, quantity),
-            (reorder_level * 2) - quantity,
-            1
-        )
+    predicted_demand = predict_demand_for_product(product.product_id) 
+    suggested_reorder = 0 
+    if reorder_needed: 
+        suggested_reorder = max( 
+            calculate_reorder_qty(predicted_demand, quantity), 
+            (reorder_level * 2) - quantity, 
+            1 
+        ) 
+
+    movement_categories = get_product_movement_clusters()
+    velocity_tag = movement_categories.get(product.product_id, "Stable")
 
     return {
-        "product_id": product.product_id,
-        "product_name": product.name,
-        "name": product.name,
-        "category": product.category or "",
-        "supplier": product.supplier or "",
-        "unit_price": float(product.unit_price) if product.unit_price else 0,
-        "quantity": quantity,
-        "reorder_level": reorder_level,
-        "expiry_date": product.expiry_date,
-        "expiry_date_display": product.expiry_date.isoformat() if product.expiry_date else "",
-        "days_left": days_left,
-        "stock_status": status_labels[0],
-        "status_labels": status_labels,
-        "status_filter": " ".join(status_labels),
-        "reorder_needed": reorder_needed,
-        "predicted_demand": predicted_demand,
-        "suggested_reorder": suggested_reorder,
+        "product_id": product.product_id, 
+        "product_name": product.name, 
+        "name": product.name, 
+        "category": product.category or "", 
+        "supplier": product.supplier or "", 
+        "unit_price": float(product.unit_price) if product.unit_price else 0, 
+        "quantity": quantity, 
+        "reorder_level": reorder_level, 
+        "expiry_date": product.expiry_date, 
+        "expiry_date_display": product.expiry_date.isoformat() if product.expiry_date else "", 
+        "days_left": days_left, 
+        "stock_status": status_labels[0], 
+        "status_labels": status_labels, 
+        "status_filter": " ".join(status_labels), 
+        "reorder_needed": reorder_needed, 
+        "predicted_demand": predicted_demand, 
+        "suggested_reorder": suggested_reorder, 
+        "velocity": velocity_tag
     }
 
 
 def inventory_summaries():
-    return [product_inventory_summary(product) for product in Product.query.order_by(Product.name.asc()).all()]
+    return [product_inventory_summary(product) for product in Product.query.order_by(Product.product_id.asc()).all()]
 
 
 def top_selling_items(limit=5):
@@ -702,6 +754,26 @@ def admin_dashboard():
 
     predictions = get_predictions()   
 
+    products = Product.query.all()
+    summarized_products = [product_inventory_summary(p) for p in products]
+
+    velocity_counts = {
+        "Fast-Moving": 0,
+        "Stable": 0,
+        "Slow-Moving": 0
+    }
+
+    for item in summarized_products:
+        v_tag = item.get("velocity", "Stable")
+        if v_tag in velocity_counts:
+            velocity_counts[v_tag] += 1
+        else:
+            velocity_counts["Stable"] += 1
+
+    print("\n--- [DEBUG] LIVE MACHINE LEARNING SEGMENT COUNTS ---")
+    print(velocity_counts)
+    print("----------------------------------------------------\n")
+
     return render_template(
         "admin-dashboard.html",
         active_page="dashboard",
@@ -710,6 +782,8 @@ def admin_dashboard():
         reorder_items=dashboard_data["reorder_items"],
         recent_alerts=dashboard_data["recent_alerts"],
         predictions=predictions,  
+        products=summarized_products,
+        counts=velocity_counts
     )
 
   
@@ -1265,13 +1339,14 @@ def admin_inventory():
     success_message = None
     if request.args.get("added"):
         success_message = "Product added successfully."
-
+    
     return render_template(
         "admin-inventory.html",
         active_page="inventory",
         products=inventory_summaries(),
         success_message=success_message
     )
+    
 @app.route("/admin-edit-product/<int:product_id>", methods=["GET", "POST"])
 @login_required
 @role_required("admin")

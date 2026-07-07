@@ -44,6 +44,7 @@
           <th><button type="button" class="admin-sort-button" data-sort="name">Name</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="category">Category</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="supplier">Supplier</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="velocity">Velocity Class</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="quantity">Quantity</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="status">Status</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="price">Price</button></th>
@@ -62,11 +63,24 @@
             data-status="{{ product.status_filter|lower }}"
             data-price="{{ product.unit_price }}"
             data-expiry="{{ product.expiry_date_display }}"
+            data-velocity="{{ product.velocity|lower }}"
+            data-sold="{{ product.sales_quantity | default(0) }}"
           >
             <td>{{ product.product_id }}</td>
             <td>{{ product.name }}</td>
             <td>{{ product.category }}</td>
             <td>{{ product.supplier }}</td>
+            
+            <td style="text-align: center; vertical-align: middle;">
+              {% if product.velocity == 'Fast-Moving' %}
+                <span style="background-color: #ecfdf5; color: #065f46; padding: 0.25rem 0.6rem; border-radius: 50px; font-weight: 600; font-size: 0.8rem; border: 1px solid #a7f3d0; display: inline-block; white-space: nowrap;">🚀 Fast-Moving</span>
+              {% elif product.velocity == 'Slow-Moving' %}
+                <span style="background-color: #fef3c7; color: #92400e; padding: 0.25rem 0.6rem; border-radius: 50px; font-weight: 600; font-size: 0.8rem; border: 1px solid #fde68a; display: inline-block; white-space: nowrap;">🐌 Slow-Moving</span>
+              {% else %}
+                <span style="background-color: #f1f5f9; color: #334155; padding: 0.25rem 0.6rem; border-radius: 50px; font-weight: 600; font-size: 0.8rem; border: 1px solid #cbd5e1; display: inline-block; white-space: nowrap;">📦 Stable</span>
+              {% endif %}
+            </td>
+
             <td>{{ product.quantity }}</td>
             <td>
               <div class="admin-status-list">
@@ -90,7 +104,7 @@
           </tr>
         {% else %}
           <tr class="admin-empty-row">
-            <td colspan="9" class="empty">No inventory items found.</td>
+            <td colspan="11" class="empty">No inventory items found.</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -298,7 +312,7 @@
   }
 
   function sortValue(row, key) {
-    if (key === "id" || key === "quantity" || key === "price") {
+    if (key === "id" || key === "quantity" || key === "price" || key === "sold") {
       return Number(row.dataset[key]) || 0;
     }
 
