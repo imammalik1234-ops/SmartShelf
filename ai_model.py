@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
 
 def get_predictions():
     # Load your actual sales data
@@ -25,9 +27,27 @@ def get_predictions():
         if len(y) < 2:
             continue
 
-        model = LinearRegression()
-        model.fit(X, y)
+                # Split data into training (80%) and testing (20%)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=0.2,
+            random_state=42
+        )
 
+        # Train the model
+        model = LinearRegression()
+        model.fit(X_train, y_train)
+
+        # Test the model
+        y_pred = model.predict(X_test)
+
+        # Calculate MAE
+        mae = mean_absolute_error(y_test, y_pred)
+
+        print(f"{product} -> MAE: {mae:.2f}")
+
+        # Predict future demand
         future_step = np.array([[len(group)]])
         predicted = model.predict(future_step)[0]
 

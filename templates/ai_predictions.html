@@ -9,7 +9,7 @@
   <p class="subtitle">Predicted demand and reorder recommendations</p>
 
   <div class="panel table-panel">
-    <table>
+    <table id="predictionTable">
       <thead>
         <tr>
           <th>Product</th>
@@ -57,4 +57,35 @@
       </tbody>
     </table>
   </div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.querySelector(".search input");
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener("input", function () {
+
+        const keyword = this.value.toLowerCase();
+
+        const rows = document.querySelectorAll("#predictionTable tbody tr");
+
+        rows.forEach(function(row) {
+
+            const product = row.cells[0].textContent.toLowerCase();
+
+            if (product.includes(keyword)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+
+        });
+
+    });
+
+});
+</script>
 {% endblock %}
