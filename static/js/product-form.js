@@ -48,7 +48,7 @@ function populateProductDetails() {
   setOptions(
     supplierSelect,
     info ? info.suppliers : [],
-    "Select a supplier",
+    "Select a brand",
     selectedValues.supplier
   );
 }
@@ -69,16 +69,14 @@ function showValidationErrors(errors) {
 function validateForm(event) {
   const errors = [];
   const quantity = Number(document.getElementById("quantity").value);
-  const unitPrice = Number(document.getElementById("unit_price").value);
   const reorderLevel = Number(document.getElementById("reorder_level").value);
   const expiryInput = document.getElementById("expiry_date");
 
   if (!categorySelect.value) errors.push("Please select a category.");
   if (!productSelect.value) errors.push("Please select a product.");
   if (!variantSelect.value) errors.push("Please select a product variant.");
-  if (!supplierSelect.value) errors.push("Please select a supplier.");
+  if (!supplierSelect.value) errors.push("Please select a brand.");
   if (!Number.isInteger(quantity) || quantity < 0) errors.push("Quantity must be greater than or equal to 0.");
-  if (!unitPrice || unitPrice <= 0) errors.push("Selling price must be greater than 0.");
   if (!Number.isInteger(reorderLevel) || reorderLevel < 0) errors.push("Reorder level must be greater than or equal to 0.");
   if (!expiryInput.value) errors.push("Please select an expiry date.");
 

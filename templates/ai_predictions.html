@@ -2,7 +2,6 @@
 {% set active_page = "ai" %}
 
 {% block title %}AI Predictions - Smart Shelf{% endblock %}
-{% block search_placeholder %}Search predictions...{% endblock %}
 
 {% block content %}
   <h1>AI Predictions</h1>
@@ -57,35 +56,4 @@
       </tbody>
     </table>
   </div>
-{% endblock %}
-{% block scripts %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    const searchInput = document.querySelector(".search input");
-
-    if (!searchInput) return;
-
-    searchInput.addEventListener("input", function () {
-
-        const keyword = this.value.toLowerCase();
-
-        const rows = document.querySelectorAll("#predictionTable tbody tr");
-
-        rows.forEach(function(row) {
-
-            const product = row.cells[0].textContent.toLowerCase();
-
-            if (product.includes(keyword)) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
-
-        });
-
-    });
-
-});
-</script>
 {% endblock %}

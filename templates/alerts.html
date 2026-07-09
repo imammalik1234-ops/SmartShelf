@@ -105,7 +105,7 @@
             </td>
             <td>{{ item.quantity }}</td>
             <td>{{ item.reorder_level }}</td>
-            <td>Order {{ item.suggested_reorder }} unit{{ '' if item.suggested_reorder == 1 else 's' }} from {{ item.supplier or 'supplier' }}.</td>
+            <td>Order {{ item.suggested_reorder }} unit{{ '' if item.suggested_reorder == 1 else 's' }} from {{ item.supplier or 'brand' }}.</td>
           </tr>
         {% else %}
           <tr>

@@ -287,7 +287,35 @@ def form_data_from_request():
     return {field: request.form.get(field, "").strip() for field in fields}
 
 
-def validate_product_form(form_data, require_catalog=True, existing_product_id=None, require_future_expiry=False):
+def exact_product_batch_query(cleaned, existing_product_id=None):
+    query = Product.query.filter_by(
+        name=cleaned["name"],
+        category=cleaned["category"],
+        supplier=cleaned["supplier"],
+        expiry_date=cleaned["expiry_date"]
+    )
+
+    if existing_product_id is not None:
+        query = query.filter(Product.product_id != existing_product_id)
+
+    return query
+
+
+def add_quantity_to_existing_product(product, quantity):
+    inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+
+    if inventory is None:
+        inventory = Inventory(product_id=product.product_id, quantity=0)
+        db.session.add(inventory)
+
+    inventory.quantity = (inventory.quantity or 0) + quantity
+    inventory.last_updated = datetime.now()
+    create_low_stock_alert(product, inventory)
+    create_expiry_alert(product)
+    db.session.commit()
+
+
+def validate_product_form(form_data, require_catalog=True, existing_product_id=None, require_future_expiry=False, require_unit_price=True, check_duplicates=True):
     errors = []
     cleaned = {}
 
@@ -304,14 +332,14 @@ def validate_product_form(form_data, require_catalog=True, existing_product_id=N
             if variant not in product_info["variants"]:
                 errors.append("Please select a valid product variant.")
             if supplier not in product_info["suppliers"]:
-                errors.append("Please select a valid supplier.")
+                errors.append("Please select a valid brand.")
     else:
         if not product:
             errors.append("Product name is required.")
         if not category:
             errors.append("Category is required.")
         if not supplier:
-            errors.append("Supplier is required.")
+            errors.append("Brand is required.")
 
     try:
         quantity = int(form_data.get("quantity", ""))
@@ -323,11 +351,14 @@ def validate_product_form(form_data, require_catalog=True, existing_product_id=N
 
     try:
         unit_price = float(form_data.get("unit_price", ""))
-        if unit_price <= 0:
+        if unit_price <= 0 and require_unit_price:
             errors.append("Selling price must be greater than 0.")
+        elif unit_price <= 0:
+            unit_price = 0
     except ValueError:
         unit_price = 0
-        errors.append("Selling price must be a valid number.")
+        if require_unit_price:
+            errors.append("Selling price must be a valid number.")
 
     try:
         reorder_level = int(form_data.get("reorder_level", ""))
@@ -348,16 +379,8 @@ def validate_product_form(form_data, require_catalog=True, existing_product_id=N
     elif require_future_expiry and expiry_date <= date.today():
         errors.append("Expiry date must be a future date.")
 
-    product_name = variant if require_catalog else product
-    if product_name:
-        duplicate_query = Product.query.filter_by(name=product_name, category=category, supplier=supplier)
-        if existing_product_id is not None:
-            duplicate_query = duplicate_query.filter(Product.product_id != existing_product_id)
-        if duplicate_query.first():
-            errors.append("A product with the same name, category, and supplier already exists.")
-
     cleaned.update({
-        "name": product_name,
+        "name": variant if require_catalog else product,
         "category": category,
         "supplier": supplier,
         "quantity": quantity,
@@ -365,6 +388,10 @@ def validate_product_form(form_data, require_catalog=True, existing_product_id=N
         "expiry_date": expiry_date,
         "reorder_level": reorder_level,
     })
+
+    if check_duplicates and cleaned["name"] and cleaned["expiry_date"]:
+        if exact_product_batch_query(cleaned, existing_product_id).first():
+            errors.append("A product with the same category, product, variant, brand, and expiry date already exists.")
 
     return errors, cleaned
 
@@ -940,10 +967,15 @@ def get_inventory():
 @login_required
 @role_required("staff")
 def inventory_page():
+    success_message = None
+    if request.args.get("updated"):
+        success_message = "Existing inventory updated successfully. Stock quantity has been increased."
+
     return render_template(
         "inventory.html",
         active_page="inventory",
-        products=inventory_summaries()
+        products=inventory_summaries(),
+        success_message=success_message
     )
 @app.route("/inventory/all-products")
 @login_required
@@ -1017,7 +1049,7 @@ def add_product():
 
     if request.method == "POST":
         form_data = {key: request.form.get(key, form_defaults[key]).strip() for key in form_defaults}
-        errors, cleaned = validate_product_form(form_data)
+        errors, cleaned = validate_product_form(form_data, require_unit_price=False, check_duplicates=False)
 
         if errors:
             return render_template(
@@ -1029,6 +1061,12 @@ def add_product():
                 tomorrow=(date.today() + timedelta(days=1)).isoformat(),
                 is_admin_page=False
             ), 400
+
+        existing_product = exact_product_batch_query(cleaned).first()
+
+        if existing_product:
+            add_quantity_to_existing_product(existing_product, cleaned["quantity"])
+            return redirect(url_for("inventory_page", updated=existing_product.product_id))
 
         new_product = Product(
             name=cleaned["name"],
@@ -1073,7 +1111,7 @@ def admin_add_product():
 
     if request.method == "POST":
         form_data = form_data_from_request()
-        errors, cleaned = validate_product_form(form_data, require_future_expiry=True)
+        errors, cleaned = validate_product_form(form_data, require_future_expiry=True, require_unit_price=False, check_duplicates=False)
 
         if errors:
             return render_product_form(
@@ -1083,6 +1121,12 @@ def admin_add_product():
                 errors=errors,
                 is_admin_page=True
             ), 400
+
+        existing_product = exact_product_batch_query(cleaned).first()
+
+        if existing_product:
+            add_quantity_to_existing_product(existing_product, cleaned["quantity"])
+            return redirect(url_for("admin_inventory", updated=existing_product.product_id))
 
         new_product = Product(
             name=cleaned["name"],
@@ -1339,6 +1383,8 @@ def admin_inventory():
     success_message = None
     if request.args.get("added"):
         success_message = "Product added successfully."
+    elif request.args.get("updated"):
+        success_message = "Existing inventory updated successfully. Stock quantity has been increased."
     
     return render_template(
         "admin-inventory.html",
@@ -1558,7 +1604,7 @@ def export_data():
     output = io.StringIO()
     writer = csv.writer(output)
     
-    writer.writerow(["Product ID", "Product Name", "Category", "Supplier", "Unit Price", "Current Stock", "Expiry Date", "Reorder Level"])
+    writer.writerow(["Product ID", "Product Name", "Category", "Brand", "Unit Price", "Current Stock", "Expiry Date", "Reorder Level"])
     
     for product in products:
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()

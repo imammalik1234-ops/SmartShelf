@@ -8,7 +8,7 @@
   <div class="admin-inventory-heading">
     <div>
       <h1>Inventory</h1>
-      <p class="subtitle">Track product quantities, suppliers, prices, and expiry dates</p>
+      <p class="subtitle">Track product quantities, brands, prices, and expiry dates</p>
     </div>
     <a href="/admin-add-product" class="admin-add-product-btn">Add Product</a>
   </div>
@@ -18,14 +18,6 @@
   {% endif %}
 
   <div class="admin-inventory-toolbar">
-    <input
-      type="search"
-      id="inventorySearch"
-      class="admin-inventory-search"
-      placeholder="Search inventory..."
-      aria-label="Search inventory"
-    >
-
     <select id="inventoryFilter" class="admin-inventory-filter" aria-label="Filter inventory status">
       <option value="all">All statuses</option>
       <option value="In Stock">In Stock</option>
@@ -43,7 +35,7 @@
           <th><button type="button" class="admin-sort-button" data-sort="id">ID</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="name">Name</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="category">Category</button></th>
-          <th><button type="button" class="admin-sort-button" data-sort="supplier">Supplier</button></th>
+          <th><button type="button" class="admin-sort-button" data-sort="supplier">Brand</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="velocity">Velocity Class</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="quantity">Quantity</button></th>
           <th><button type="button" class="admin-sort-button" data-sort="status">Status</button></th>
@@ -161,11 +153,6 @@
     font-weight: 800;
   }
 
-  .admin-inventory-search {
-    flex: 1;
-    min-width: 220px;
-  }
-
   .admin-inventory-filter {
     width: 190px;
     flex: 0 0 190px;
@@ -278,7 +265,6 @@
 
 {% block scripts %}
 <script>
-  const searchInput = document.getElementById("inventorySearch");
   const filterSelect = document.getElementById("inventoryFilter");
   const tableBody = document.querySelector("#inventoryTable tbody");
   const rows = Array.from(tableBody.querySelectorAll("tr[data-id]"));
@@ -290,19 +276,9 @@
   }
 
   function rowMatches(row) {
-    const query = searchInput.value.trim().toLowerCase();
     const filter = filterSelect.value.toLowerCase();
-    const searchable = [
-      row.dataset.id,
-      row.dataset.name,
-      row.dataset.category,
-      row.dataset.supplier,
-      row.dataset.status,
-      row.dataset.expiry
-    ].join(" ");
 
-    return (!query || searchable.includes(query)) &&
-      (filter === "all" || row.dataset.status.includes(filter));
+    return filter === "all" || row.dataset.status.includes(filter);
   }
 
   function applyFilters() {
@@ -341,7 +317,6 @@
     applyFilters();
   }
 
-  searchInput.addEventListener("input", applyFilters);
   filterSelect.addEventListener("change", applyFilters);
   document.querySelectorAll(".admin-sort-button").forEach(button => {
     button.addEventListener("click", () => sortRows(button.dataset.sort));

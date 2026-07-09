@@ -91,13 +91,6 @@
 
     <main class="main">
       <header class="topbar">
-  <div class="search">
-    {% if active_page not in ["dashboard", "inventory", "alerts", "record_sale",] %}
-        <span class="search-icon"></span>
-        <input type="text" placeholder="{% block search_placeholder %}Search inventory...{% endblock %}">
-    {% endif %}
-</div>
-
   <div class="profile">
           <div>
             <h4>{{ profile_name|default('Admin') }}</h4>
