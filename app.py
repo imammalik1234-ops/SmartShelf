@@ -1,11 +1,12 @@
-from unittest import result
-
 from flask import Flask, request, render_template, redirect, url_for, session
+from ai_model import get_predictions
 from flask_cors import CORS
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import date, datetime, timedelta
+import pandas as pd
+product_info = pd.read_csv("products.csv")
 import os
 import io
 import csv
@@ -245,7 +246,7 @@ def predict_demand_for_product(product_id):
 
 
 def calculate_reorder_qty(predicted_demand, current_stock):
-    reorder_qty = predicted_demand - current_stock
+    reorder_qty = int(predicted_demand * 1.2) - current_stock
     return reorder_qty if reorder_qty > 0 else 0
 
 
@@ -699,13 +700,16 @@ def admin_dashboard():
     check_alerts()
     dashboard_data = admin_dashboard_data()
 
+    predictions = get_predictions()   
+
     return render_template(
         "admin-dashboard.html",
         active_page="dashboard",
         stats=dashboard_data["stats"],
         top_selling=dashboard_data["top_selling"],
         reorder_items=dashboard_data["reorder_items"],
-        recent_alerts=dashboard_data["recent_alerts"]
+        recent_alerts=dashboard_data["recent_alerts"],
+        predictions=predictions,  
     )
 
   
@@ -1370,33 +1374,72 @@ def api_predictions():
 
 
 @app.route("/ai-predictions")
-@login_required
-@role_required("admin")
 def ai_predictions():
+    ai_data = get_predictions()
     predictions = []
 
-    for product in Product.query.all():
-        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
-        current_stock = inventory.quantity if inventory else 0
+    for item in ai_data:
+        full_name = item["name"]
 
-        predicted_demand = predict_demand_for_product(product.product_id)
-        reorder_qty = calculate_reorder_qty(predicted_demand, current_stock)
+        if "(" in full_name:
+            base_name = full_name.split(" (")[0].strip()
+            variant = full_name.split(" (")[1].replace(")", "").strip()
+        else:
+            base_name = full_name.strip()
+            variant = ""
 
-        status = "Restock Soon" if reorder_qty > 0 else "Sufficient"
+        predicted = item["predicted"]
+
+        product = Product.query.filter(
+            db.func.lower(Product.name).like(f"%{base_name.lower()}%")
+        ).first()
+
+        price = 0
+        price_row = product_info[
+            (product_info["Product"].str.lower().str.strip() == base_name.lower()) &
+            (product_info["Variant"].str.lower().str.strip() == variant.lower())
+        ]
+
+        if not price_row.empty:
+            price = float(price_row.iloc[0]["Unit Price (RM)"])
+
+        if product:
+            inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+            current_stock = inventory.quantity if inventory else 0
+        else:
+            current_stock = 0
+
+        reorder_qty = calculate_reorder_qty(predicted, current_stock)
+
+        if reorder_qty > 50:
+            status = "High Risk"
+        elif reorder_qty > 10:
+            status = "Medium Risk"
+        elif reorder_qty > 0:
+            status = "Low Risk"
+        else:
+            status = "Sufficient"
+
+        total_cost = round(reorder_qty * price, 2)
 
         predictions.append({
-            "product_name": product.name,
+            "product_name": base_name,
+            "variant": variant,
             "current_stock": current_stock,
-            "predicted_demand": predicted_demand,
+            "predicted_demand": predicted,
             "recommended_reorder_qty": reorder_qty,
-            "status": status   
+            "price": price,
+            "status": status,
+            "total_cost": total_cost
         })
 
-    return render_template(
-    "ai_predictions.html",
-    predictions=predictions,
-    active_page="ai"   
-)
+    predictions = sorted(
+        predictions,
+        key=lambda x: x["recommended_reorder_qty"],
+        reverse=True
+    )
+
+    return render_template("ai_predictions.html", predictions=predictions)
 
 @app.route("/admin-settings", methods=["GET", "POST"])
 @login_required
