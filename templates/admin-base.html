@@ -50,31 +50,31 @@
         <nav class="nav">
     <a class="{{ 'active' if active_page == 'dashboard' else '' }}"
        href="/admin-dashboard">
-        <span class="nav-icon">D</span>
+        <span class="nav-icon">📊</span>
         Dashboard
     </a>
 
     <a class="{{ 'active' if active_page == 'inventory' else '' }}"
        href="/admin-inventory">
-        <span class="nav-icon">I</span>
+        <span class="nav-icon">📦</span>
         Inventory
     </a>
 
     <a class="{{ 'active' if active_page == 'alerts' else '' }}"
        href="/admin-alerts">
-        <span class="nav-icon">!</span>
+        <span class="nav-icon">🚨</span>
         Alerts
     </a>
 
     <a class="{{ 'active' if active_page == 'record_sale' else '' }}"
        href="/admin-record-sale">
-        <span class="nav-icon">S</span> 
+        <span class="nav-icon">🛒</span> 
         Record Sale
     </a>
 
 <a class="{{ 'active' if active_page == 'ai' else '' }}" 
        href="/ai-predictions">
-        <span class="nav-icon">!</span>
+        <span class="nav-icon">🤖</span>
         AI Predictions
      </a>
 
@@ -91,11 +91,7 @@
 
     <main class="main">
       <header class="topbar">
-        <div class="search">
-          <span></span>
-          <input type="search" placeholder="{% block search_placeholder %}Search inventory...{% endblock %}">
-        </div>
-        <div class="profile">
+  <div class="profile">
           <div>
             <h4>{{ profile_name|default('Admin') }}</h4>
             <p>{{ profile_email|default('admin@smartshelf.com') }}</p>

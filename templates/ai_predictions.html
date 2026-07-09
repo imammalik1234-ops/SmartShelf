@@ -2,14 +2,13 @@
 {% set active_page = "ai" %}
 
 {% block title %}AI Predictions - Smart Shelf{% endblock %}
-{% block search_placeholder %}Search predictions...{% endblock %}
 
 {% block content %}
   <h1>AI Predictions</h1>
   <p class="subtitle">Predicted demand and reorder recommendations</p>
 
   <div class="panel table-panel">
-    <table>
+    <table id="predictionTable">
       <thead>
         <tr>
           <th>Product</th>
