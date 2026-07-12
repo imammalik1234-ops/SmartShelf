@@ -61,7 +61,12 @@
         </div>
 
         <div>
-          <label for="reorder_level">Reorder Level *</label>
+          <label for="unit_price">Price (RM) *</label>
+          <input id="unit_price" type="number" step="0.01" min="0.01" name="unit_price" value="{{ form_data.unit_price }}" placeholder="0.00" required>
+        </div>
+
+        <div>
+          <label for="reorder_level">Restock Level *</label>
           <input id="reorder_level" type="number" name="reorder_level" min="0" step="1" value="{{ form_data.reorder_level }}" placeholder="10" required>
         </div>
 
@@ -78,6 +83,7 @@
   <script>
     const catalog = {{ catalog|tojson }};
     const selectedValues = {{ form_data|tojson }};
+    const priceLookup = {{ price_lookup|tojson }};
   </script>
   <script src="{{ url_for('static', filename='js/product-form.js') }}"></script>
 {% endblock %}

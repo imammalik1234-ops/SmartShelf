@@ -19,7 +19,7 @@
     </a>
 
     <a href="/admin-inventory?filter=Reorder Needed" class="admin-stat-card admin-stat-card-primary">
-      <div class="admin-stat-label">Reorder Needed</div>
+      <div class="admin-stat-label">Shelf Restocking Required</div>
       <div class="admin-stat-value">{{ stats.reorder_needed }}</div>
     </a>
   </div>
@@ -115,7 +115,7 @@
                     <div class="admin-list-row recent-alert-row recent-alert-{{ alert.priority }}">
                         <div class="admin-list-main">
                             <div class="admin-list-title">{{ alert.product_name }}</div>
-                            <div class="admin-list-subtitle">{{ alert.alert_type }}</div>
+                            <div class="admin-list-subtitle">{{ "Shelf Restocking Required" if alert.alert_type == "Reorder Needed" else alert.alert_type }}</div>
                         </div>
                         <div class="admin-list-meta">
                             <span class="admin-badge badge-{{ alert.priority }}">{{ alert.detail }}</span>
@@ -179,7 +179,7 @@
 
         <div class="admin-panel" style="height: 300px; display: flex; flex-direction: column;">
             <div class="admin-panel-header">
-                <h2>Reorder Needed</h2>
+                <h2>Shelf Restocking Required</h2>
             </div>
 
             <div style="overflow-y: auto; flex: 1;">
@@ -188,7 +188,7 @@
                         <tr>
                             <th>Product</th>
                             <th>Stock</th>
-                            <th>Reorder Level</th>
+                            <th>Restock Level</th>
                             <th>Suggested</th>
                         </tr>
                     </thead>
@@ -203,7 +203,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="4" class="empty">No reorder needed.</td>
+                            <td colspan="4" class="empty">No shelf restocking required.</td>
                         </tr>
                         {% endfor %}
                     </tbody>

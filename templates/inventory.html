@@ -18,13 +18,21 @@
   {% endif %}
 
   <div class="admin-inventory-toolbar">
+    <input
+      type="search"
+      id="inventorySearch"
+      class="admin-inventory-search"
+      placeholder="Search inventory..."
+      aria-label="Search inventory"
+    >
+
     <select id="inventoryFilter" class="admin-inventory-filter" aria-label="Filter inventory status">
       <option value="all">All statuses</option>
       <option value="In Stock">In Stock</option>
       <option value="Low Stock">Low Stock</option>
       <option value="Expiring Soon">Expiring Soon</option>
       <option value="Expired">Expired</option>
-      <option value="Reorder Needed">Reorder Needed</option>
+      <option value="Reorder Needed">Shelf Restocking Required</option>
     </select>
   </div>
 
@@ -64,12 +72,12 @@
               <div class="admin-status-list staff-status-list">
                 {% for status in product.status_labels %}
                   <span class="admin-status-badge staff-status-badge {{ status|lower|replace(' ', '-') }}">
-                    {{ status }}
+                    {{ "Shelf Restocking Required" if status == "Reorder Needed" else status }}
                   </span>
                 {% endfor %}
               </div>
             </td>
-            <td>${{ "%.2f"|format(product.unit_price) }}</td>
+            <td>RM {{ "%.2f"|format(product.unit_price) }}</td>
             <td>{{ product.expiry_date_display or "-" }}</td>
             <td>
               <div class="row-actions admin-row-actions staff-row-actions">
@@ -145,6 +153,7 @@
 
 {% block scripts %}
 <script>
+  const searchInput = document.getElementById("inventorySearch");
   const filterSelect = document.getElementById("inventoryFilter");
   const tableBody = document.querySelector("#inventoryTable tbody");
   const rows = Array.from(tableBody.querySelectorAll("tr[data-id]"));
@@ -156,9 +165,19 @@
   }
 
   function rowMatches(row) {
+    const query = searchInput.value.trim().toLowerCase();
     const filter = filterSelect.value.toLowerCase();
+    const searchable = [
+      row.dataset.id,
+      row.dataset.name,
+      row.dataset.category,
+      row.dataset.supplier,
+      row.dataset.status,
+      row.dataset.expiry
+    ].join(" ");
 
-    return filter === "all" || row.dataset.status.includes(filter);
+    return (!query || searchable.includes(query)) &&
+      (filter === "all" || row.dataset.status.includes(filter));
   }
 
   function applyFilters() {
@@ -197,6 +216,7 @@
     applyFilters();
   }
 
+  searchInput.addEventListener("input", applyFilters);
   filterSelect.addEventListener("change", applyFilters);
   document.querySelectorAll(".admin-sort-button").forEach(button => {
     button.addEventListener("click", () => sortRows(button.dataset.sort));

@@ -173,8 +173,11 @@ def parse_date(value):
 def check_alerts():
     today = date.today()
 
-    for product in Product.query.all():
-        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+    for inventory in Inventory.query.all():
+        product = Product.query.get(inventory.product_id)
+        if product is None:
+            continue
+
         quantity = inventory.quantity if inventory else 0
 
         # LOW STOCK ALERT
@@ -268,7 +271,19 @@ def form_int(field_name, default=0):
 def product_form_defaults(product=None, inventory=None):
     product_name = product.name if product else ""
     category = product.category if product else ""
-    product_value = product_name if category in PRODUCT_CATALOG and product_name in PRODUCT_CATALOG[category] else product_name
+    product_value = product_name
+
+    if product:
+        catalog_categories = [category] if category in PRODUCT_CATALOG else PRODUCT_CATALOG.keys()
+        for catalog_category in catalog_categories:
+            for catalog_product, info in PRODUCT_CATALOG[catalog_category].items():
+                if product.name in info["variants"] and product.supplier in info["suppliers"]:
+                    category = catalog_category
+                    product_value = catalog_product
+                    break
+            else:
+                continue
+            break
 
     return {
         "category": category,
@@ -301,12 +316,23 @@ def exact_product_batch_query(cleaned, existing_product_id=None):
     return query
 
 
-def add_quantity_to_existing_product(product, quantity):
+def catalog_product_query(cleaned):
+    return Product.query.filter_by(
+        name=cleaned["name"],
+        category=cleaned["category"],
+        supplier=cleaned["supplier"]
+    )
+
+
+def add_quantity_to_existing_product(product, quantity, expiry_date=None):
     inventory = Inventory.query.filter_by(product_id=product.product_id).first()
 
     if inventory is None:
         inventory = Inventory(product_id=product.product_id, quantity=0)
         db.session.add(inventory)
+
+    if expiry_date is not None:
+        product.expiry_date = expiry_date
 
     inventory.quantity = (inventory.quantity or 0) + quantity
     inventory.last_updated = datetime.now()
@@ -363,10 +389,10 @@ def validate_product_form(form_data, require_catalog=True, existing_product_id=N
     try:
         reorder_level = int(form_data.get("reorder_level", ""))
         if reorder_level < 0:
-            errors.append("Reorder level cannot be negative.")
+            errors.append("Restock level cannot be negative.")
     except ValueError:
         reorder_level = 0
-        errors.append("Reorder level must be a whole number.")
+        errors.append("Restock level must be a whole number.")
 
     try:
         expiry_date = parse_date(form_data.get("expiry_date"))
@@ -401,6 +427,22 @@ def render_product_form(template_name, **context):
     context.setdefault("tomorrow", (date.today() + timedelta(days=1)).isoformat())
     context.setdefault("today", date.today().isoformat())
     return render_template(template_name, **context)
+
+
+def product_price_lookup():
+    lookup = {}
+
+    for product in Product.query.all():
+        for category, products in PRODUCT_CATALOG.items():
+            if product.category != category:
+                continue
+
+            for product_name, info in products.items():
+                if product.name in info["variants"] and product.supplier in info["suppliers"]:
+                    key = "|".join([category, product_name, product.name, product.supplier])
+                    lookup.setdefault(key, str(product.unit_price if product.unit_price is not None else ""))
+
+    return lookup
 
 def get_product_movement_clusters():
     """
@@ -506,6 +548,18 @@ def inventory_summaries():
     return [product_inventory_summary(product) for product in Product.query.order_by(Product.product_id.asc()).all()]
 
 
+def stocked_inventory_summaries():
+    summaries = []
+
+    inventory_items = Inventory.query.order_by(Inventory.inventory_id.asc()).all()
+    for inventory in inventory_items:
+        product = Product.query.get(inventory.product_id)
+        if product:
+            summaries.append(product_inventory_summary(product))
+
+    return summaries
+
+
 def top_selling_items(limit=5):
     totals = {}
     for sale in Sale.query.all():
@@ -521,7 +575,7 @@ def top_selling_items(limit=5):
 
 
 def admin_dashboard_data():
-    summaries = inventory_summaries()
+    summaries = stocked_inventory_summaries()
     low_stock = [item for item in summaries if item["reorder_needed"]]
     expiring = [item for item in summaries if item["days_left"] is not None and 0 <= item["days_left"] <= 7]
     reorder_items = [item for item in summaries if item["reorder_needed"]]
@@ -540,7 +594,7 @@ def admin_dashboard_data():
 
 
 def staff_dashboard_data():
-    summaries = inventory_summaries()
+    summaries = stocked_inventory_summaries()
     low_stock = [item for item in summaries if item["reorder_needed"]]
     expiring = [item for item in summaries if item["days_left"] is not None and 0 <= item["days_left"] <= 7]
     reorder_items = [item for item in summaries if item["reorder_needed"]]
@@ -562,9 +616,10 @@ def staff_dashboard_data():
 
 def admin_alert_sections():
     summaries = inventory_summaries()
+    stocked_summaries = stocked_inventory_summaries()
 
     low_stock = [
-        item for item in summaries
+        item for item in stocked_summaries
         if item["reorder_needed"]
     ]
 
@@ -574,7 +629,7 @@ def admin_alert_sections():
     ]
 
     reorder_needed = [
-        item for item in summaries
+        item for item in stocked_summaries
         if item["reorder_needed"]
     ]
 
@@ -592,7 +647,7 @@ def recent_admin_alerts(limit=5):
 def inventory_alert_items(limit=None):
     alerts = []
 
-    for item in inventory_summaries():
+    for item in stocked_inventory_summaries():
         if item["days_left"] is not None:
             if item["days_left"] < 0:
                 alerts.append({
@@ -957,6 +1012,8 @@ def get_inventory():
             "product_id": item.product_id,
             "product_name": product.name if product else None,
             "category": product.category if product else None,
+            "supplier": product.supplier if product else None,
+            "unit_price": float(product.unit_price) if product and product.unit_price else 0,
             "quantity": item.quantity,
             "last_updated": str(item.last_updated)
         })
@@ -974,7 +1031,7 @@ def inventory_page():
     return render_template(
         "inventory.html",
         active_page="inventory",
-        products=inventory_summaries(),
+        products=stocked_inventory_summaries(),
         success_message=success_message
     )
 @app.route("/inventory/all-products")
@@ -984,7 +1041,7 @@ def all_products_page():
     return render_template(
         "inventory_filtered.html",
         page_title="All Products",
-        products=inventory_summaries(),
+        products=stocked_inventory_summaries(),
         active_page="inventory"
     )
 
@@ -993,7 +1050,7 @@ def all_products_page():
 @login_required
 @role_required("staff")
 def low_stock_page():
-    products = [item for item in inventory_summaries() if item["reorder_needed"]]
+    products = [item for item in stocked_inventory_summaries() if item["reorder_needed"]]
 
     return render_template(
         "inventory_filtered.html",
@@ -1007,11 +1064,11 @@ def low_stock_page():
 @login_required
 @role_required("staff")
 def reorder_needed_page():
-    products = [item for item in inventory_summaries() if item["reorder_needed"]]
+    products = [item for item in stocked_inventory_summaries() if item["reorder_needed"]]
 
     return render_template(
         "inventory_filtered.html",
-        page_title="Reorder Needed",
+        page_title="Shelf Restocking Required",
         products=products,
         active_page="inventory"
     )
@@ -1049,7 +1106,7 @@ def add_product():
 
     if request.method == "POST":
         form_data = {key: request.form.get(key, form_defaults[key]).strip() for key in form_defaults}
-        errors, cleaned = validate_product_form(form_data, require_unit_price=False, check_duplicates=False)
+        errors, cleaned = validate_product_form(form_data, check_duplicates=False)
 
         if errors:
             return render_template(
@@ -1059,13 +1116,14 @@ def add_product():
                 form_data=form_data,
                 errors=errors,
                 tomorrow=(date.today() + timedelta(days=1)).isoformat(),
-                is_admin_page=False
+                is_admin_page=False,
+                price_lookup=product_price_lookup()
             ), 400
 
-        existing_product = exact_product_batch_query(cleaned).first()
+        existing_product = catalog_product_query(cleaned).first()
 
         if existing_product:
-            add_quantity_to_existing_product(existing_product, cleaned["quantity"])
+            add_quantity_to_existing_product(existing_product, cleaned["quantity"], cleaned["expiry_date"])
             return redirect(url_for("inventory_page", updated=existing_product.product_id))
 
         new_product = Product(
@@ -1099,7 +1157,8 @@ def add_product():
         form_data=form_defaults,
         errors=[],
         tomorrow=(date.today() + timedelta(days=1)).isoformat(),
-        is_admin_page=False
+        is_admin_page=False,
+        price_lookup=product_price_lookup()
     )
 
 
@@ -1111,7 +1170,7 @@ def admin_add_product():
 
     if request.method == "POST":
         form_data = form_data_from_request()
-        errors, cleaned = validate_product_form(form_data, require_future_expiry=True, require_unit_price=False, check_duplicates=False)
+        errors, cleaned = validate_product_form(form_data, require_future_expiry=True, check_duplicates=False)
 
         if errors:
             return render_product_form(
@@ -1119,13 +1178,14 @@ def admin_add_product():
                 active_page="inventory",
                 form_data=form_data,
                 errors=errors,
-                is_admin_page=True
+                is_admin_page=True,
+                price_lookup=product_price_lookup()
             ), 400
 
-        existing_product = exact_product_batch_query(cleaned).first()
+        existing_product = catalog_product_query(cleaned).first()
 
         if existing_product:
-            add_quantity_to_existing_product(existing_product, cleaned["quantity"])
+            add_quantity_to_existing_product(existing_product, cleaned["quantity"], cleaned["expiry_date"])
             return redirect(url_for("admin_inventory", updated=existing_product.product_id))
 
         new_product = Product(
@@ -1158,7 +1218,8 @@ def admin_add_product():
         active_page="inventory",
         form_data=form_defaults,
         errors=[],
-        is_admin_page=True
+        is_admin_page=True,
+        price_lookup=product_price_lookup()
     )
 
 def delete_product_records(product_id):
@@ -1389,7 +1450,7 @@ def admin_inventory():
     return render_template(
         "admin-inventory.html",
         active_page="inventory",
-        products=inventory_summaries(),
+        products=stocked_inventory_summaries(),
         success_message=success_message
     )
     
@@ -1604,7 +1665,7 @@ def export_data():
     output = io.StringIO()
     writer = csv.writer(output)
     
-    writer.writerow(["Product ID", "Product Name", "Category", "Brand", "Unit Price", "Current Stock", "Expiry Date", "Reorder Level"])
+    writer.writerow(["Product ID", "Product Name", "Category", "Brand", "Unit Price", "Current Stock", "Expiry Date", "Restock Level"])
     
     for product in products:
         inventory = Inventory.query.filter_by(product_id=product.product_id).first()

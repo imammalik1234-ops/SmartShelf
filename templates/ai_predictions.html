@@ -7,6 +7,16 @@
   <h1>AI Predictions</h1>
   <p class="subtitle">Predicted demand and reorder recommendations</p>
 
+  <div class="admin-inventory-toolbar">
+    <input
+      type="search"
+      id="predictionSearch"
+      class="admin-inventory-search"
+      placeholder="Search predictions..."
+      aria-label="Search predictions"
+    >
+  </div>
+
   <div class="panel table-panel">
     <table id="predictionTable">
       <thead>
@@ -14,7 +24,7 @@
           <th>Product</th>
           <th>Current Stock</th>
           <th>Predicted Demand</th>
-          <th>Recommended Reorder</th>
+          <th>Suggested Reorder</th>
           <th>Price</th>
           <th>Status</th>
           <th>Total Cost</th>
@@ -22,7 +32,7 @@
       </thead>
       <tbody>
         {% for item in predictions %}
-<tr>
+<tr data-search="{{ (item.product_name ~ ' ' ~ item.variant ~ ' ' ~ item.status)|lower }}">
    <td>
   {{ item.product_name }}
   {% if item.variant %}
@@ -56,4 +66,21 @@
       </tbody>
     </table>
   </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const predictionSearch = document.getElementById("predictionSearch");
+  const predictionRows = Array.from(document.querySelectorAll("#predictionTable tbody tr[data-search]"));
+
+  function applyPredictionSearch() {
+    const query = predictionSearch.value.trim().toLowerCase();
+
+    predictionRows.forEach(row => {
+      row.hidden = query && !row.dataset.search.includes(query);
+    });
+  }
+
+  predictionSearch.addEventListener("input", applyPredictionSearch);
+</script>
 {% endblock %}
