@@ -771,6 +771,7 @@ th {
 .admin-stat-label {
     font-size: 13px;
     color: #6b7280;
+    font-weight: 800;
     margin-bottom: 10px;
 }
 
@@ -778,6 +779,38 @@ th {
     font-size: 28px;
     font-weight: 700;
     color: #111827;
+}
+
+.admin-stat-card-warning {
+    border-color: #fde68a;
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+}
+
+.admin-stat-card-warning .admin-stat-value {
+    color: #b45309;
+}
+
+.admin-stat-card-primary {
+    border-color: #c7d2fe;
+    background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
+}
+
+.admin-stat-card-primary .admin-stat-value {
+    color: #4f63f6;
+}
+
+.staff-dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.staff-dashboard-stats .admin-stat-card {
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.staff-dashboard-stats .admin-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(79, 99, 246, 0.14);
 }
 
 .admin-dashboard-grid {
@@ -2034,6 +2067,19 @@ th, td {
 .stat-link {
   flex: 1;   /* makes all cards equal width */
 }
+
+.stats-row .stat-title {
+  font-size: 20px;
+}
+
+.admin-recovery-dashboard .admin-stat-label {
+  font-size: 15px;
+}
+
+.staff-dashboard-grid .status-badge,
+.admin-recovery-dashboard .admin-badge {
+  font-size: 14px;
+}
 /* GRID */
 .dashboard-grid {
   display: grid;
@@ -2505,6 +2551,11 @@ h2 {
   margin: 0 0 18px;
 }
 
+.admin-inventory-search {
+  flex: 1;
+  min-width: 220px;
+}
+
 .admin-inventory-filter {
   width: 190px;
   flex: 0 0 190px;
@@ -2650,6 +2701,16 @@ h2 {
 
   .alerts-section-grid,
   .two-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+.staff-dashboard-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .staff-dashboard-stats {
     grid-template-columns: 1fr;
   }
 }

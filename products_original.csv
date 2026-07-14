@@ -1,0 +1,46 @@
+Category,Product,Variant,Brand,Unit Price(RM)
+Dairy,Milk,Full Cream Milk,"Nestle; Fresh Farms Co.; Farmhouse Dairy",6.5
+Dairy,Milk,Low Fat Milk,"Nestle; Fresh Farms Co.; Farmhouse Dairy",6.8
+Dairy,Milk,Chocolate Milk,"Nestle; Fresh Farms Co.; Farmhouse Dairy",7.5
+Dairy,Cheese,Cheddar Cheese,"Fresh Farms Co.; Dairy Best",9.9
+Dairy,Cheese,Mozzarella Cheese,"Fresh Farms Co.; Dairy Best",11.9
+Dairy,Cheese,Cheese Slices,"Fresh Farms Co.; Dairy Best",8.9
+Dairy,Yogurt,Plain Yogurt,"Dairy Best; Farmhouse Dairy",3.9
+Dairy,Yogurt,Strawberry Yogurt,"Dairy Best; Farmhouse Dairy",4.5
+Dairy,Yogurt,Greek Yogurt,"Dairy Best; Farmhouse Dairy",6.9
+Beverages,Coke,Coke 200ml,"Coca-Cola; Local Beverage Distributor",2
+Beverages,Coke,Coke 500ml,"Coca-Cola; Local Beverage Distributor",3.5
+Beverages,Coke,Coke 1.5L,"Coca-Cola; Local Beverage Distributor",6.9
+Beverages,Coke,Diet Coke,"Coca-Cola; Local Beverage Distributor",3.8
+Beverages,Coke,Coke Zero,"Coca-Cola; Local Beverage Distributor",3.8
+Beverages,Pepsi,Pepsi 200ml,"PepsiCo; Local Beverage Distributor",2
+Beverages,Pepsi,Pepsi 500ml,"PepsiCo; Local Beverage Distributor",3.4
+Beverages,Pepsi,Pepsi 1.5L,"PepsiCo; Local Beverage Distributor",6.8
+Beverages,Pepsi,Pepsi Max,"PepsiCo; Local Beverage Distributor",3.8
+Beverages,Sprite,Sprite 200ml,"Coca-Cola; Local Beverage Distributor",2
+Beverages,Sprite,Sprite 500ml,"Coca-Cola; Local Beverage Distributor",3.4
+Beverages,Sprite,Sprite 1.5L,"Coca-Cola; Local Beverage Distributor",6.8
+Bakery,Bread,White Bread,"Gardenia; Sunshine Bakery; Local Bakery",3.8
+Bakery,Bread,Wholemeal Bread,"Gardenia; Sunshine Bakery; Local Bakery",4.8
+Bakery,Bread,Multigrain Bread,"Gardenia; Sunshine Bakery; Local Bakery",5.8
+Bakery,Bun,Plain Bun,"Sunshine Bakery; Local Bakery",2
+Bakery,Bun,Cream Bun,"Sunshine Bakery; Local Bakery",2.8
+Bakery,Bun,Red Bean Bun,"Sunshine Bakery; Local Bakery",2.8
+Bakery,Croissant,Butter Croissant,"Local Bakery; French Bakehouse",4.5
+Bakery,Croissant,Chocolate Croissant,"Local Bakery; French Bakehouse",5.2
+Produce,Apple,Red Apple,"Fresh Farms Co.; Green Harvest",2.2
+Produce,Apple,Green Apple,"Fresh Farms Co.; Green Harvest",2.4
+Produce,Apple,Fuji Apple,"Fresh Farms Co.; Green Harvest",3.2
+Produce,Banana,Cavendish Banana,"Green Harvest; Fresh Farms Co.",1.8
+Produce,Banana,Mini Banana,"Green Harvest; Fresh Farms Co.",2.5
+Produce,Lettuce,Romaine Lettuce,"Green Harvest; Local Farm",4.8
+Produce,Lettuce,Butterhead Lettuce,"Green Harvest; Local Farm",5.2
+Pantry,Rice,White Rice 5kg,"Golden Grain; Pantry Supply Co.",22.9
+Pantry,Rice,Brown Rice 5kg,"Golden Grain; Pantry Supply Co.",28.9
+Pantry,Rice,Basmati Rice 5kg,"Golden Grain; Pantry Supply Co.",34.9
+Pantry,Pasta,Spaghetti,"Pantry Supply Co.; Italian Foods",5.5
+Pantry,Pasta,Macaroni,"Pantry Supply Co.; Italian Foods",5.2
+Pantry,Pasta,Penne,"Pantry Supply Co.; Italian Foods",5.8
+Pantry,Cereal,Corn Flakes,"Nestle; Kellogg's",11.9
+Pantry,Cereal,Oat Cereal,"Nestle; Kellogg's",13.9
+Pantry,Cereal,Chocolate Cereal,"Nestle; Kellogg's",15.9

@@ -35,19 +35,16 @@
     document.getElementById("saleDate").valueAsDate = new Date();
 
     async function loadProductsAndInventory() {
-      const productResponse = await fetch(`${API_URL}/products`);
-      const products = await productResponse.json();
-
       const inventoryResponse = await fetch(`${API_URL}/inventory`);
       inventoryData = await inventoryResponse.json();
 
       const select = document.getElementById("productSelect");
       select.innerHTML = `<option value="">Select a product</option>`;
 
-      products.forEach(product => {
+      inventoryData.forEach(item => {
         const option = document.createElement("option");
-        option.value = product.product_id;
-        option.textContent = product.name;
+        option.value = item.product_id;
+        option.textContent = `${item.product_name} - ${item.category} - ${item.supplier} (${item.quantity} available)`;
         select.appendChild(option);
       });
     }

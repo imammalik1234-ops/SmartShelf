@@ -9,26 +9,15 @@
   <p class="dashboard-subtitle">Quick overview of the inventory status</p>
 </div>
 
-<div class="stats-row">
-  <a href="/inventory-page?filter=Low Stock" class="stat-link">
-    <div class="stat-card">
-      <div class="stat-title">Low Stock</div>
-      <div class="stat-value"><b>{{ stats.low_stock }}</b></div>
-    </div>
+<div class="admin-stats-grid admin-stats-grid-2 staff-dashboard-stats">
+  <a href="/expiry-alerts" class="admin-stat-card admin-stat-card-warning">
+    <div class="admin-stat-label">Expiring Soon</div>
+    <div class="admin-stat-value">{{ stats.expiring }}</div>
   </a>
 
-  <a href="/expiry-alerts" class="stat-link">
-    <div class="stat-card">
-      <div class="stat-title">Expiring Soon</div>
-      <div class="stat-value"><b>{{ stats.expiring }}</b></div>
-    </div>
-  </a>
-
-  <a href="/inventory-page?filter=Reorder Needed" class="stat-link">
-    <div class="stat-card">
-      <div class="stat-title">Reorder Needed</div>
-      <div class="stat-value"><b>{{ stats.reorder_needed }}</b></div>
-    </div>
+  <a href="/inventory-page?filter=Reorder Needed" class="admin-stat-card admin-stat-card-primary">
+    <div class="admin-stat-label">Shelf Restocking Required</div>
+    <div class="admin-stat-value">{{ stats.reorder_needed }}</div>
   </a>
 </div>
 
@@ -58,7 +47,7 @@
           <div class="list-row recent-alert-row recent-alert-{{ alert.priority }}">
             <div>
               <div class="item-title">{{ alert.product_name }}</div>
-              <div class="item-meta">{{ alert.alert_type }}</div>
+              <div class="item-meta">{{ "Shelf Restocking Required" if alert.alert_type == "Reorder Needed" else alert.alert_type }}</div>
             </div>
             <span class="status-badge {{ alert.priority }}">{{ alert.detail }}</span>
           </div>
@@ -107,14 +96,14 @@
   </div>
 
   <div class="box">
-    <h3>Reorder Needed</h3>
+    <h3>Shelf Restocking Required</h3>
     <table>
       <thead>
         <tr>
           <th>Product</th>
           <th>Category</th>
           <th>Current Stock</th>
-          <th>Reorder Level</th>
+          <th>Restock Level</th>
           <th>Suggested Order</th>
         </tr>
       </thead>
@@ -129,7 +118,7 @@
           </tr>
         {% else %}
           <tr>
-            <td colspan="5" class="empty">No reorder needed.</td>
+            <td colspan="5" class="empty">No shelf restocking required.</td>
           </tr>
         {% endfor %}
       </tbody>
