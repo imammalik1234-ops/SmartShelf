@@ -492,6 +492,7 @@ def get_product_movement_clusters():
 def product_inventory_summary(product):
     inventory = inventory_for_product(product.product_id)
     quantity = inventory.quantity if inventory else 0
+    sales_quantity = db.session.query(db.func.sum(Sale.quantity)).filter(Sale.product_id == product.product_id).scalar() or 0
     reorder_level = product.reorder_level or 0
     days_left = None
     status_labels = []
@@ -530,6 +531,7 @@ def product_inventory_summary(product):
         "supplier": product.supplier or "", 
         "unit_price": float(product.unit_price) if product.unit_price else 0, 
         "quantity": quantity, 
+        "sales_quantity": int(sales_quantity),
         "reorder_level": reorder_level, 
         "expiry_date": product.expiry_date, 
         "expiry_date_display": product.expiry_date.isoformat() if product.expiry_date else "", 

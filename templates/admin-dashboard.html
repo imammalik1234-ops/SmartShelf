@@ -38,8 +38,9 @@
         <div style="overflow-y: auto; flex: 1; font-size: 12px; color: #14532d; display: flex; flex-direction: column; gap: 4px;">
           {% set fast_items = products | selectattr('velocity', 'equalto', 'Fast-Moving') | list %}
           {% for p in fast_items %}
-            <div style="background: rgba(255,255,255,0.6); padding: 6px 8px; border-radius: 4px; font-weight: 600;">
-              {{ p.name }} <span style="float: right; opacity: 0.7;">{{ p.product_id }}</span>
+            <div style="background: rgba(255,255,255,0.6); padding: 6px 8px; border-radius: 4px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <span style="min-width: 0; overflow-wrap: anywhere;">{{ p.name }}{% if p.supplier %} ({{ p.supplier }}){% endif %}</span>
+              <span style="opacity: 0.7; white-space: nowrap;">{{ p.sales_quantity }} sold</span>
             </div>
           {% else %}
             <div style="font-style: italic; opacity: 0.6; padding: 5px;">No fast-moving items</div>
@@ -54,8 +55,9 @@
         <div style="overflow-y: auto; flex: 1; font-size: 12px; color: #0f172a; display: flex; flex-direction: column; gap: 4px;">
           {% set stable_items = products | selectattr('velocity', 'equalto', 'Stable') | list %}
           {% for p in stable_items %}
-            <div style="background: rgba(255,255,255,0.8); padding: 6px 8px; border-radius: 4px;">
-              {{ p.name }} <span style="float: right; color: gray;">{{ p.product_id }}</span>
+            <div style="background: rgba(255,255,255,0.8); padding: 6px 8px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <span style="min-width: 0; overflow-wrap: anywhere;">{{ p.name }}{% if p.supplier %} ({{ p.supplier }}){% endif %}</span>
+              <span style="color: gray; white-space: nowrap;">{{ p.sales_quantity }} sold</span>
             </div>
           {% else %}
             <div style="font-style: italic; opacity: 0.6; padding: 5px;">No stable items</div>
@@ -70,8 +72,9 @@
         <div style="overflow-y: auto; flex: 1; font-size: 12px; color: #78350f; display: flex; flex-direction: column; gap: 4px;">
           {% set slow_items = products | selectattr('velocity', 'equalto', 'Slow-Moving') | list %}
           {% for p in slow_items %}
-            <div style="background: rgba(255,255,255,0.6); padding: 6px 8px; border-radius: 4px; font-weight: 500;">
-              {{ p.name }} <span style="float: right; opacity: 0.7;">{{ p.product_id }}</span>
+            <div style="background: rgba(255,255,255,0.6); padding: 6px 8px; border-radius: 4px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <span style="min-width: 0; overflow-wrap: anywhere;">{{ p.name }}{% if p.supplier %} ({{ p.supplier }}){% endif %}</span>
+              <span style="opacity: 0.7; white-space: nowrap;">{{ p.sales_quantity }} sold</span>
             </div>
           {% else %}
             <div style="font-style: italic; opacity: 0.6; padding: 5px;">No slow-moving items</div>
