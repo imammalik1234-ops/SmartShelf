@@ -324,7 +324,7 @@ def catalog_product_query(cleaned):
     )
 
 
-def add_quantity_to_existing_product(product, quantity, expiry_date=None):
+def add_quantity_to_existing_product(product, quantity, expiry_date=None, unit_price=None, reorder_level=None):
     inventory = Inventory.query.filter_by(product_id=product.product_id).first()
 
     if inventory is None:
@@ -333,6 +333,10 @@ def add_quantity_to_existing_product(product, quantity, expiry_date=None):
 
     if expiry_date is not None:
         product.expiry_date = expiry_date
+    if unit_price is not None:
+        product.unit_price = unit_price
+    if reorder_level is not None:
+        product.reorder_level = reorder_level
 
     inventory.quantity = (inventory.quantity or 0) + quantity
     inventory.last_updated = datetime.now()
@@ -1125,7 +1129,13 @@ def add_product():
         existing_product = catalog_product_query(cleaned).first()
 
         if existing_product:
-            add_quantity_to_existing_product(existing_product, cleaned["quantity"], cleaned["expiry_date"])
+            add_quantity_to_existing_product(
+                existing_product,
+                cleaned["quantity"],
+                cleaned["expiry_date"],
+                cleaned["unit_price"],
+                cleaned["reorder_level"]
+            )
             return redirect(url_for("inventory_page", updated=existing_product.product_id))
 
         new_product = Product(
@@ -1187,7 +1197,13 @@ def admin_add_product():
         existing_product = catalog_product_query(cleaned).first()
 
         if existing_product:
-            add_quantity_to_existing_product(existing_product, cleaned["quantity"], cleaned["expiry_date"])
+            add_quantity_to_existing_product(
+                existing_product,
+                cleaned["quantity"],
+                cleaned["expiry_date"],
+                cleaned["unit_price"],
+                cleaned["reorder_level"]
+            )
             return redirect(url_for("admin_inventory", updated=existing_product.product_id))
 
         new_product = Product(
@@ -1563,37 +1579,25 @@ def ai_predictions():
     predictions = []
 
     for item in ai_data:
-        full_name = item["name"]
-
-        if "(" in full_name:
-            base_name = full_name.split(" (")[0].strip()
-            variant = full_name.split(" (")[1].replace(")", "").strip()
-        else:
-            base_name = full_name.strip()
-            variant = ""
-
+        product_id = item["product_id"]
         predicted = item["predicted"]
+        product = Product.query.get(product_id)
 
-        product = Product.query.filter(
-            db.func.lower(Product.name).like(f"%{base_name.lower()}%")
-        ).first()
+        if product is None:
+            continue
 
-        price = 0
-        price_row = product_info[
-            (product_info["Product"].str.lower().str.strip() == base_name.lower()) &
-            (product_info["Variant"].str.lower().str.strip() == variant.lower())
-        ]
+        price = float(product.unit_price) if product.unit_price else 0
+        inventory = Inventory.query.filter_by(product_id=product.product_id).first()
+        current_stock = inventory.quantity if inventory else 0
 
-        if not price_row.empty:
-            price = float(price_row.iloc[0]["Unit Price (RM)"])
-
-        if product:
-            inventory = Inventory.query.filter_by(product_id=product.product_id).first()
-            current_stock = inventory.quantity if inventory else 0
-        else:
-            current_stock = 0
-
+        reorder_level = product.reorder_level or 0
         reorder_qty = calculate_reorder_qty(predicted, current_stock)
+        if inventory is not None and current_stock <= reorder_level:
+            reorder_qty = max(
+                reorder_qty,
+                (reorder_level * 2) - current_stock,
+                1
+            )
 
         if reorder_qty > 50:
             status = "High Risk"
@@ -1607,11 +1611,12 @@ def ai_predictions():
         total_cost = round(reorder_qty * price, 2)
 
         predictions.append({
-            "product_name": base_name,
-            "variant": variant,
+            "product_name": product.name,
+            "supplier": product.supplier,
             "current_stock": current_stock,
             "predicted_demand": predicted,
             "recommended_reorder_qty": reorder_qty,
+            "reorder_level": reorder_level,
             "price": price,
             "status": status,
             "total_cost": total_cost

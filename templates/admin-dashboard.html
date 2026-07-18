@@ -157,7 +157,7 @@
                     <tbody>
                         {% for item in predictions %}
                         <tr style="border-bottom: 1px solid #eee;">
-                            <td style="padding: 8px;">{{ item.name }}</td>
+                            <td style="padding: 8px;">{{ item.name }}{% if item.supplier %} ({{ item.supplier }}){% endif %}</td>
 
                             <td style="padding: 8px; font-weight: bold;">
                                 {{ item.predicted }} units

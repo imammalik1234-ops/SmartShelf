@@ -32,11 +32,11 @@
       </thead>
       <tbody>
         {% for item in predictions %}
-<tr data-search="{{ (item.product_name ~ ' ' ~ item.variant ~ ' ' ~ item.status)|lower }}">
+<tr data-search="{{ (item.product_name ~ ' ' ~ item.supplier ~ ' ' ~ item.status)|lower }}">
    <td>
   {{ item.product_name }}
-  {% if item.variant %}
-    ({{ item.variant }})
+  {% if item.supplier %}
+    ({{ item.supplier }})
   {% endif %}
 </td>
     <td>{{ item.current_stock }}</td>
