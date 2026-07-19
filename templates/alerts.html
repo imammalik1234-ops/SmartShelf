@@ -83,37 +83,5 @@
       </tbody>
     </table>
   </div>
-
-  <div class="panel list-panel alert-category-card full-alert-section">
-    <h3 class="alert-section-title">Shelf Restocking Required</h3>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Current Stock</th>
-          <th>Restock Level</th>
-          <th>Suggested Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in reorder_items %}
-          <tr>
-            <td>
-              <span class="alert-dot info"></span>
-              {{ item.name }}
-            </td>
-            <td>{{ item.quantity }}</td>
-            <td>{{ item.reorder_level }}</td>
-            <td>Order {{ item.suggested_reorder }} unit{{ '' if item.suggested_reorder == 1 else 's' }} from {{ item.supplier or 'brand' }}.</td>
-          </tr>
-        {% else %}
-          <tr>
-            <td colspan="4" class="empty">No shelf restocking action required.</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
 </div>
 {% endblock %}

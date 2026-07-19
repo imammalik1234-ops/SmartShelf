@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 {% set active_page = "inventory" %}
 
-{% block title %}{{ page_title }} - Smart Shelf{% endblock %}
+{% set display_title = "Inventory" if page_title == "Shelf Restocking Required" else page_title %}
+
+{% block title %}{{ display_title }} - Smart Shelf{% endblock %}
 
 {% block content %}
 <div class="staff-dashboard-page">
     <div class="dashboard-header-row">
         <div>
-            <h1 class="dashboard-title">{{ page_title }}</h1>
+            <h1 class="dashboard-title">{{ display_title }}</h1>
             <p class="dashboard-subtitle">Filtered inventory view.</p>
         </div>
     </div>
@@ -34,7 +36,7 @@
                                 <td>{{ product.supplier }}</td>
                                 <td>{{ product.quantity }}</td>
                                 <td>{{ product.expiry_date if product.expiry_date else "-" }}</td>
-                                <td>{{ product.stock_status }}</td>
+                                <td>{{ "" if product.stock_status == "Reorder Needed" else product.stock_status }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

@@ -19,7 +19,7 @@
     </a>
 
     <a href="/admin-inventory?filter=Reorder Needed" class="admin-stat-card admin-stat-card-primary">
-      <div class="admin-stat-label">Shelf Restocking Required</div>
+      <div class="admin-stat-label">Low Stock</div>
       <div class="admin-stat-value">{{ stats.reorder_needed }}</div>
     </a>
   </div>
@@ -114,11 +114,12 @@
             </div>
 
             <div class="admin-list" style="overflow-y: auto; flex: 1;">
-                {% for alert in recent_alerts %}
+                {% set visible_recent_alerts = recent_alerts | rejectattr('alert_type', 'equalto', 'Reorder Needed') | list %}
+                {% for alert in visible_recent_alerts %}
                     <div class="admin-list-row recent-alert-row recent-alert-{{ alert.priority }}">
                         <div class="admin-list-main">
                             <div class="admin-list-title">{{ alert.product_name }}</div>
-                            <div class="admin-list-subtitle">{{ "Shelf Restocking Required" if alert.alert_type == "Reorder Needed" else alert.alert_type }}</div>
+                            <div class="admin-list-subtitle">{{ alert.alert_type }}</div>
                         </div>
                         <div class="admin-list-meta">
                             <span class="admin-badge badge-{{ alert.priority }}">{{ alert.detail }}</span>
@@ -179,40 +180,6 @@
             </div>
         </div>
 
-
-        <div class="admin-panel" style="height: 300px; display: flex; flex-direction: column;">
-            <div class="admin-panel-header">
-                <h2>Shelf Restocking Required</h2>
-            </div>
-
-            <div style="overflow-y: auto; flex: 1;">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Stock</th>
-                            <th>Restock Level</th>
-                            <th>Suggested</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for item in reorder_items %}
-                        <tr>
-                            <td>{{ item.name }}</td>
-                            <td>{{ item.quantity }}</td>
-                            <td>{{ item.reorder_level }}</td>
-                            <td>{{ item.suggested_reorder }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="4" class="empty">No shelf restocking required.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
     </div>
 

@@ -32,7 +32,6 @@
       <option value="Low Stock">Low Stock</option>
       <option value="Expiring Soon">Expiring Soon</option>
       <option value="Expired">Expired</option>
-      <option value="Reorder Needed">Shelf Restocking Required</option>
     </select>
   </div>
 
@@ -71,9 +70,11 @@
             <td>
               <div class="admin-status-list staff-status-list">
                 {% for status in product.status_labels %}
-                  <span class="admin-status-badge staff-status-badge {{ status|lower|replace(' ', '-') }}">
-                    {{ "Shelf Restocking Required" if status == "Reorder Needed" else status }}
-                  </span>
+                  {% if status != "Reorder Needed" %}
+                    <span class="admin-status-badge staff-status-badge {{ status|lower|replace(' ', '-') }}">
+                      {{ status }}
+                    </span>
+                  {% endif %}
                 {% endfor %}
               </div>
             </td>

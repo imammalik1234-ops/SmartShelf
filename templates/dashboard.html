@@ -16,7 +16,7 @@
   </a>
 
   <a href="/inventory-page?filter=Reorder Needed" class="admin-stat-card admin-stat-card-primary">
-    <div class="admin-stat-label">Shelf Restocking Required</div>
+    <div class="admin-stat-label">Low Stock</div>
     <div class="admin-stat-value">{{ stats.reorder_needed }}</div>
   </a>
 </div>
@@ -43,11 +43,12 @@
     <div class="card">
       <h3>Recent Alerts</h3>
       <div class="staff-alert-list">
-        {% for alert in recent_alerts %}
+        {% set visible_recent_alerts = recent_alerts | rejectattr('alert_type', 'equalto', 'Reorder Needed') | list %}
+        {% for alert in visible_recent_alerts %}
           <div class="list-row recent-alert-row recent-alert-{{ alert.priority }}">
             <div>
               <div class="item-title">{{ alert.product_name }}</div>
-              <div class="item-meta">{{ "Shelf Restocking Required" if alert.alert_type == "Reorder Needed" else alert.alert_type }}</div>
+              <div class="item-meta">{{ alert.alert_type }}</div>
             </div>
             <span class="status-badge {{ alert.priority }}">{{ alert.detail }}</span>
           </div>
@@ -93,36 +94,6 @@
         {% endfor %}
       </table>
     </div>
-  </div>
-
-  <div class="box">
-    <h3>Shelf Restocking Required</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Category</th>
-          <th>Current Stock</th>
-          <th>Restock Level</th>
-          <th>Suggested Order</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in reorder_items %}
-          <tr>
-            <td>{{ item.name }}</td>
-            <td>{{ item.category }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>{{ item.reorder_level }}</td>
-            <td>{{ item.suggested_reorder }}</td>
-          </tr>
-        {% else %}
-          <tr>
-            <td colspan="5" class="empty">No shelf restocking required.</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
   </div>
 </div>
 {% endblock %}

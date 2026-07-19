@@ -73,35 +73,6 @@
       </tbody>
     </table>
   </div>
-
-  <div class="panel list-panel alert-category-card full-alert-section">
-    <h3 class="alert-section-title">Shelf Restocking Required</h3>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Brand</th>
-          <th>Current Stock</th>
-          <th>Suggested Reorder Quantity</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in reorder_items %}
-          <tr>
-            <td>{{ item.name }}</td>
-            <td>{{ item.supplier }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>{{ item.suggested_reorder }}</td>
-          </tr>
-        {% else %}
-          <tr>
-            <td colspan="4" class="empty">No shelf restocking action required.</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
 </div>
 
 <style>
@@ -113,10 +84,6 @@
 
   .alert-category-card {
     padding: 24px;
-  }
-
-  .full-alert-section {
-    grid-column: 1 / -1;
   }
 
   .alert-section-title {
